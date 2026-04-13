@@ -125,4 +125,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# This tells Django where to look for static files outside of standard apps
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
 AUTH_USER_MODEL = 'users.CustomUser'
