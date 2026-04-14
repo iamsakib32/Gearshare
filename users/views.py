@@ -3,8 +3,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import UserRegistrationSerializer
 from django.contrib.auth import authenticate
+from .models import CustomUser  # <--- Add this import
 
 
+# (Keep your RegisterView exactly how it is)
 class RegisterView(APIView):
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
@@ -16,11 +18,19 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     def post(self, request):
-        username = request.data.get('username')
+        # We grab whatever they typed into the first box
+        login_id = request.data.get('username')
         password = request.data.get('password')
 
-        # Django checks the database and safely compares the encrypted passwords
-        user = authenticate(username=username, password=password)
+        # SMART LOGIC: If it has an '@', it's an email. Find the username attached to it!
+        if '@' in str(login_id):
+            try:
+                user_obj = CustomUser.objects.get(email=login_id)
+                login_id = user_obj.username  # Swap the email for the real username
+            except CustomUser.DoesNotExist:
+                pass  # If email doesn't exist, let it fail normally below
+
+        user = authenticate(username=login_id, password=password)
 
         if user:
             return Response({
@@ -29,4 +39,4 @@ class LoginView(APIView):
                 "role": user.role
             }, status=status.HTTP_200_OK)
 
-        return Response({"error": "Invalid username or password"}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
