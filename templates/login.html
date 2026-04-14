@@ -19,7 +19,6 @@
         .btn-orange:hover { background: #C2550E; box-shadow: 0 0 20px rgba(249,115,22,0.3); }
         .glow-orb { position: absolute; filter: blur(100px); border-radius: 50%; z-index: -1; }
 
-        /* Dynamic Breathing Animations */
         @keyframes float-orb-1 {
             0% { transform: translate(0px, 0px) scale(1); opacity: 0.3; }
             33% { transform: translate(30px, -40px) scale(1.1); opacity: 0.5; }
@@ -52,8 +51,8 @@
 
         <form id="login-form" class="space-y-5">
             <div>
-                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-2 font-bold uppercase tracking-wider">Username</label>
-                <input type="text" id="username" class="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-[#1A1A1F] border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all shadow-sm" placeholder="Enter your username" required>
+                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-2 font-bold uppercase tracking-wider">Username or Email</label>
+                <input type="text" id="username" class="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-[#1A1A1F] border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all shadow-sm" placeholder="Enter username or email" required>
             </div>
             <div>
                 <label class="block text-xs text-gray-600 dark:text-gray-400 mb-2 font-bold uppercase tracking-wider">Password</label>
