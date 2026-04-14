@@ -24,7 +24,6 @@
         .animate-float-1 { animation: float-orb-1 16s infinite ease-in-out; }
         .animate-float-2 { animation: float-orb-2 19s infinite ease-in-out reverse; }
 
-        /* Smooth transitions for the checklist */
         .rule-text { transition: all 0.3s ease; }
     </style>
 </head>
@@ -93,8 +92,20 @@
                 </button>
                 <ul id="role-dropdown-menu" class="hidden absolute z-50 w-full mt-2 rounded-xl bg-white dark:bg-[#222228] border border-gray-200 dark:border-white/10 shadow-2xl overflow-hidden transition-all">
                     <li data-value="renter" class="role-option px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-500/20 hover:text-orange-600 dark:hover:text-orange-400 cursor-pointer transition-colors border-b border-gray-100 dark:border-white/5">Renter (Looking to borrow)</li>
-                    <li data-value="owner" class="role-option px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-500/20 hover:text-orange-600 dark:hover:text-orange-400 cursor-pointer transition-colors">Owner (Listing equipment)</li>
+                    <li data-value="owner" class="role-option px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-500/20 hover:text-orange-600 dark:hover:text-orange-400 cursor-pointer transition-colors border-b border-gray-100 dark:border-white/5">Owner (Listing equipment)</li>
+                    <li data-value="admin" class="role-option px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-500/20 hover:text-orange-600 dark:hover:text-orange-400 cursor-pointer transition-colors">Admin (System Vault)</li>
                 </ul>
+            </div>
+
+            <div id="admin-code-container" class="hidden transform transition-all duration-300">
+                <label class="block text-xs text-orange-500 dark:text-orange-400 mb-2 font-bold uppercase tracking-wider">Admin Master Code</label>
+                <div class="relative">
+                    <input type="password" id="master-code" class="w-full px-4 py-3 pr-10 rounded-xl bg-white dark:bg-[#1A1A1F] border border-orange-500/50 text-gray-900 dark:text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all shadow-sm shadow-orange-500/10" placeholder="Enter Vault Clearance Code">
+
+                    <button type="button" class="toggle-password absolute inset-y-0 right-0 pr-3 flex items-center text-orange-500/60 hover:text-orange-500 transition-colors" data-target="master-code">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    </button>
+                </div>
             </div>
 
             <div>
@@ -157,20 +168,31 @@
             updateRule(ruleSpecial, /[!@#$%^&*(),.?":{}|<>]/.test(val), 'One special character (!@#$%...)');
         });
 
-        // --- CUSTOM DROPDOWN LOGIC ---
+        // --- CUSTOM DROPDOWN & ADMIN TOGGLE LOGIC ---
         const roleBtn = document.getElementById('role-custom-select');
         const roleMenu = document.getElementById('role-dropdown-menu');
         const roleInput = document.getElementById('role');
         const roleText = document.getElementById('role-selected-text');
         const roleOptions = document.querySelectorAll('.role-option');
+        const adminCodeContainer = document.getElementById('admin-code-container');
+        const masterCodeInput = document.getElementById('master-code');
 
         roleBtn.addEventListener('click', () => { roleMenu.classList.toggle('hidden'); });
 
         roleOptions.forEach(option => {
             option.addEventListener('click', (e) => {
+                const selectedValue = e.target.getAttribute('data-value');
                 roleText.innerText = e.target.innerText.trim();
-                roleInput.value = e.target.getAttribute('data-value');
+                roleInput.value = selectedValue;
                 roleMenu.classList.add('hidden');
+
+                // If Admin is selected, drop down the secret code box!
+                if (selectedValue === 'admin') {
+                    adminCodeContainer.classList.remove('hidden');
+                } else {
+                    adminCodeContainer.classList.add('hidden');
+                    masterCodeInput.value = ''; // clear it out
+                }
             });
         });
 
@@ -187,7 +209,6 @@
             const pass = document.getElementById('password').value;
             const confirmPass = document.getElementById('confirm-password').value;
 
-            // Check if passwords match
             if (pass !== confirmPass) {
                 msgBox.classList.remove('hidden');
                 msgBox.className = 'w-full p-3 mb-6 rounded-xl text-sm font-bold text-center bg-orange-100 dark:bg-orange-500/10 border border-orange-500/30 text-orange-700 dark:text-orange-400';
@@ -195,7 +216,6 @@
                 return;
             }
 
-            // Frontend sanity check before hitting the API
             if (pass.length < 8 || !/[A-Z]/.test(pass) || !/\d/.test(pass) || !/[!@#$%^&*(),.?":{}|<>]/.test(pass)) {
                 msgBox.classList.remove('hidden');
                 msgBox.className = 'w-full p-3 mb-6 rounded-xl text-sm font-bold text-center bg-red-100 dark:bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-400';
@@ -212,7 +232,8 @@
                         email: document.getElementById('email').value,
                         password: pass,
                         role: document.getElementById('role').value,
-                        nid_passport_number: document.getElementById('nid').value
+                        nid_passport_number: document.getElementById('nid').value,
+                        master_code: masterCodeInput.value // <--- Added the code payload here
                     })
                 });
 
@@ -225,8 +246,10 @@
                 } else {
                     msgBox.className = 'w-full p-3 mb-6 rounded-xl text-sm font-bold text-center bg-red-100 dark:bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-400';
 
-                    // SMART ERROR ROUTER: Checks which field failed and shows the exact message
-                    if (data.email) {
+                    // SMART ERROR ROUTER
+                    if (data.master_code) {
+                        msgBox.innerText = data.master_code[0]; // Captures our custom admin error
+                    } else if (data.email) {
                         msgBox.innerText = "Email Error: " + data.email[0];
                     } else if (data.username) {
                         msgBox.innerText = "Username Error: " + data.username[0];

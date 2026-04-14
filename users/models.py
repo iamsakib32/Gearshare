@@ -5,6 +5,7 @@ class CustomUser(AbstractUser):
     ROLE_CHOICES = (
         ('renter', 'Renter'),
         ('owner', 'Owner'),
+        ('admin', 'Admin'), # <--- ADDED ADMIN ROLE
     )
     # Django already includes username, first_name, last_name, email, and password!
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='renter')
