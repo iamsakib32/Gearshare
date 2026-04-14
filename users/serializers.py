@@ -2,13 +2,16 @@ import re
 from rest_framework import serializers
 from .models import CustomUser
 
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     email = serializers.EmailField(required=True)
+    # Temporary field just for checking the code, it won't save to the database
+    master_code = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'password', 'role', 'nid_passport_number']
+        fields = ['username', 'email', 'password', 'role', 'nid_passport_number', 'master_code']
 
     # --- UNIQUE EMAIL CHECK ---
     def validate_email(self, value):
@@ -18,7 +21,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     # --- UNIQUE NID CHECK ---
     def validate_nid_passport_number(self, value):
-        # We also check if it's not empty, just in case they try to bypass it with blank spaces
         if value and CustomUser.objects.filter(nid_passport_number=value).exists():
             raise serializers.ValidationError("This NID/Passport number is already registered to another user.")
         return value
@@ -35,13 +37,30 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Password must contain at least one special character.")
         return value
 
+    # --- THE ADMIN BOUNCER ---
+    def validate(self, data):
+        # If they selected Admin, they MUST have the correct Master Code
+        if data.get('role') == 'admin':
+            if data.get('master_code') != 'VAULT_ADMIN_2026':
+                raise serializers.ValidationError({"master_code": "Access Denied: Invalid Admin Clearance Code."})
+        return data
+
     def create(self, validated_data):
+        # Remove master_code so it doesn't try to save to the database model
+        validated_data.pop('master_code', None)
+
         user = CustomUser(
             username=validated_data['username'],
             email=validated_data['email'],
             role=validated_data.get('role', 'renter'),
             nid_passport_number=validated_data.get('nid_passport_number', '')
         )
+
+        # QA Auto-Upgrade: If they successfully registered as Admin, give them max trust instantly
+        if user.role == 'admin':
+            user.trust_tier = 'Platform Admin'
+            user.trust_score = 10.0
+
         user.set_password(validated_data['password'])
         user.save()
         return user
