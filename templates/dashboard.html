@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GearShare | Your Vault</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = { darkMode: 'class', theme: { extend: { colors: { orange: { 500: '#F97316', 600: '#C2550E' } } } } }
         if (localStorage.getItem('gs-theme') === 'light' || (!('gs-theme' in localStorage) && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -15,6 +15,9 @@
     <style>
         body { font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
         .heading { font-family: 'Syne', sans-serif; }
+        /* The custom logo font class */
+        .logo-font { font-family: 'Montserrat', sans-serif; }
+
         .glass-panel { background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); border: 1px solid rgba(0,0,0,0.05); }
         html.dark .glass-panel { background: rgba(20,20,23,0.8); border: 1px solid rgba(255,255,255,0.06); }
         .glow-orb { position: absolute; filter: blur(120px); border-radius: 50%; z-index: -1; }
@@ -43,9 +46,13 @@
     <div class="glow-orb bg-orange-400/20 dark:bg-orange-500/10 w-[500px] h-[500px] top-0 right-0 animate-float-1"></div>
     <div class="glow-orb bg-orange-500/10 dark:bg-orange-600/10 w-[600px] h-[600px] bottom-0 left-[-100px] animate-float-2"></div>
 
-    <nav class="sticky top-0 w-full z-50 glass-panel shadow-sm">
+    <nav class="sticky top-0 w-full z-50 glass-panel shadow-sm transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold heading tracking-wide">Gear<span class="text-orange-500">Share</span></h1>
+
+            <div class="flex items-center space-x-3">
+                <img src="/static/images/GearShare Logo only-Photoroom.png" alt="GearShare Logo" class="h-10 w-auto">
+                <h1 class="text-2xl font-bold logo-font tracking-wide text-gray-900 dark:text-white">Gear<span class="text-orange-500">Share</span></h1>
+            </div>
 
             <div class="flex items-center space-x-6">
                 <div class="hidden sm:flex items-center px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20">
