@@ -77,14 +77,11 @@ WSGI_APPLICATION = 'gearshare_core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'neondb',
-        'USER': 'neondb_owner',
-        'PASSWORD': 'npg_ZaufJBWe36vc',
-        'HOST': 'ep-cool-voice-am0znjrv-pooler.c-5.us-east-1.aws.neon.tech',
-        'PORT': '5432',
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
+        'NAME': 'postgres',
+        'USER': 'postgres.kyjuuqtxpjsiyodgnjfp',
+        'PASSWORD': 'Crazy_Phantom@#$',  # <-- PUT YOUR REAL PASSWORD HERE
+        'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',
+        'PORT': '6543',
     }
 }
 
