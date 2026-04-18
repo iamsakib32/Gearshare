@@ -130,30 +130,42 @@ STATICFILES_DIRS = [
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
+
 # --- SUPABASE S3 CLOUD STORAGE CONFIGURATION ---
-# Replace these with your actual keys from the Supabase dashboard!
 AWS_ACCESS_KEY_ID = '1a1a9d6f744bdcf34eee96978c3afbfe'
 AWS_SECRET_ACCESS_KEY = 'cf8247ff2bed8d775c03cf727a2c3a26a4d61fc38401f9518022e9049e3670f7'
-AWS_STORAGE_BUCKET_NAME = 'gearshare-media'
 AWS_S3_ENDPOINT_URL = 'https://kyjuuqtxpjsiyodgnjfp.storage.supabase.co/storage/v1/s3'
-AWS_S3_REGION_NAME = 'ap-southeast-1' # Leave this as is, Supabase routes it automatically
-# THE MAGIC URL ROUTER: Tells Django to use Supabase's native public CDN to display the image
-AWS_S3_CUSTOM_DOMAIN = 'kyjuuqtxpjsiyodgnjfp.supabase.co/storage/v1/object/public/gearshare-media'
-
-# THE MAGIC FIX: Forces boto3 to use Supabase's specific URL routing format
+AWS_S3_REGION_NAME = 'ap-southeast-1'
 AWS_S3_ADDRESSING_STYLE = "path"
 
-# Stops AWS from attaching massive signature tokens to your image URLs
-AWS_QUERYSTRING_AUTH = False
+# NEW: Supabase strictly requires Signature Version 4 for Private Presigned URLs
+AWS_S3_SIGNATURE_VERSION = "s3v4"
 
-# This ensures files with the same name don't overwrite each other
-AWS_S3_FILE_OVERWRITE = False
-
-# THE MODERN DJANGO 6.0 CLOUD ROUTER
+# THE DUAL-BRAIN STORAGE ROUTER (DJANGO 6.0+)
 STORAGES = {
+    # Brain 1: The Public CDN (For Profile Pictures)
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "bucket_name": "gearshare-media",
+            "custom_domain": "kyjuuqtxpjsiyodgnjfp.supabase.co/storage/v1/object/public/gearshare-media",
+            "querystring_auth": False,
+            "file_overwrite": False,
+        }
     },
+
+    # Brain 2: The Private Vault (For KYC Videos)
+    "private_kyc": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "bucket_name": "gearshare-kyc-private",
+            "custom_domain": None,       # <--- CRITICAL FIX: Stops the public CDN from hijacking this private URL
+            "querystring_auth": True,
+            "querystring_expire": 3600,  # URL stays alive for 1 hour to prevent timezone drift
+            "file_overwrite": False,
+        }
+    },
+
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
