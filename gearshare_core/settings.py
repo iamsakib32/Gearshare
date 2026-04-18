@@ -130,12 +130,16 @@ STATICFILES_DIRS = [
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
+
 # --- SUPABASE S3 CLOUD STORAGE CONFIGURATION ---
 AWS_ACCESS_KEY_ID = '1a1a9d6f744bdcf34eee96978c3afbfe'
 AWS_SECRET_ACCESS_KEY = 'cf8247ff2bed8d775c03cf727a2c3a26a4d61fc38401f9518022e9049e3670f7'
 AWS_S3_ENDPOINT_URL = 'https://kyjuuqtxpjsiyodgnjfp.storage.supabase.co/storage/v1/s3'
 AWS_S3_REGION_NAME = 'ap-southeast-1'
 AWS_S3_ADDRESSING_STYLE = "path"
+
+# NEW: Supabase strictly requires Signature Version 4 for Private Presigned URLs
+AWS_S3_SIGNATURE_VERSION = "s3v4"
 
 # THE DUAL-BRAIN STORAGE ROUTER (DJANGO 6.0+)
 STORAGES = {
@@ -155,10 +159,10 @@ STORAGES = {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
         "OPTIONS": {
             "bucket_name": "gearshare-kyc-private",
-            "querystring_auth": True,  # <-- THIS IS THE MAGIC KEY
-            "querystring_expire": 3600,  # <-- The URL will self-destruct in exactly 60 seconds
+            "custom_domain": None,       # <--- CRITICAL FIX: Stops the public CDN from hijacking this private URL
+            "querystring_auth": True,
+            "querystring_expire": 3600,  # URL stays alive for 1 hour to prevent timezone drift
             "file_overwrite": False,
-            # Notice we do NOT include a custom_domain here. We want raw, encrypted S3 links.
         }
     },
 
