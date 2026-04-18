@@ -115,11 +115,19 @@
                 });
                 const data = await response.json();
                 msgBox.classList.remove('hidden');
+
                 if (response.ok) {
                     msgBox.className = 'w-full p-3 mb-6 rounded-xl text-sm font-bold text-center bg-green-100 dark:bg-green-500/10 border border-green-500/30 text-green-700 dark:text-green-400';
                     msgBox.innerText = 'Authentication Success. Initializing Vault...';
+
+                    // SAVE USER DATA & CLOUD PROFILE PICTURE TO BROWSER MEMORY
                     localStorage.setItem('gearshare_username', data.username);
                     localStorage.setItem('gearshare_role', data.role);
+                    localStorage.setItem('gearshare_profile_pic', data.profile_picture);
+
+                    localStorage.setItem('gearshare_trust_tier', data.trust_tier);
+                    localStorage.setItem('gearshare_trust_score', data.trust_score);
+
                     setTimeout(() => { window.location.href = '/dashboard/'; }, 1000);
                 } else {
                     msgBox.className = 'w-full p-3 mb-6 rounded-xl text-sm font-bold text-center bg-red-100 dark:bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-400';
