@@ -11,7 +11,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'password', 'role', 'nid_passport_number', 'master_code']
+        fields = ['username', 'email', 'password', 'role', 'nid_passport_number', 'master_code', 'profile_picture',
+                  'kyc_video']
 
     # --- UNIQUE EMAIL CHECK ---
     def validate_email(self, value):
@@ -37,12 +38,21 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Password must contain at least one special character.")
         return value
 
-    # --- THE ADMIN BOUNCER ---
+    # --- THE ADMIN BOUNCER & KYC ENFORCER ---
     def validate(self, data):
-        # If they selected Admin, they MUST have the correct Master Code
-        if data.get('role') == 'admin':
+        role = data.get('role', 'renter')
+
+        # 1. Admin Verification
+        if role == 'admin':
             if data.get('master_code') != 'VAULT_ADMIN_2026':
                 raise serializers.ValidationError({"master_code": "Access Denied: Invalid Admin Clearance Code."})
+
+        # 2. Renter/Owner Trust Verification
+        else:
+            if not data.get('nid_passport_number'):
+                raise serializers.ValidationError({
+                                                      "nid_passport_number": "Security Alert: NID/Passport is strictly required for Renters and Owners."})
+
         return data
 
     def create(self, validated_data):
@@ -53,14 +63,20 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             username=validated_data['username'],
             email=validated_data['email'],
             role=validated_data.get('role', 'renter'),
-            nid_passport_number=validated_data.get('nid_passport_number', '')
+            nid_passport_number=validated_data.get('nid_passport_number', ''),
+
+            # --- THE FIX: Tell Django to actually save the cloud media! ---
+            profile_picture=validated_data.get('profile_picture'),
+            kyc_video=validated_data.get('kyc_video')
         )
 
-        # QA Auto-Upgrade: If they successfully registered as Admin, give them max trust instantly
+        # QA Auto-Upgrade: Admin gets permanent Verified status instantly
         if user.role == 'admin':
-            user.trust_tier = 'Platform Admin'
+            user.trust_tier = 'Verified'
             user.trust_score = 10.0
 
         user.set_password(validated_data['password'])
+
+        # The moment we call .save(), Django will automatically beam the files to Supabase S3!
         user.save()
         return user
