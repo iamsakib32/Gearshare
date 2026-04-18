@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.core.files.storage import storages  # <--- NEW IMPORT
+from django.core.files.storage import storages
 
 
 class CustomUser(AbstractUser):
@@ -14,12 +14,13 @@ class CustomUser(AbstractUser):
     trust_score = models.FloatField(default=5.0)
     trust_tier = models.CharField(max_length=20, default='Unverified')
 
-    # --- CLOUD MEDIA FIELDS ---
+    # --- SPRINT 3: LIFECYCLE MANAGEMENT ---
+    kyc_attempts = models.IntegerField(default=0)
+    suspension_date = models.DateTimeField(null=True, blank=True)
 
-    # Uses the "default" public storage bucket automatically
+    # --- CLOUD MEDIA FIELDS ---
     profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
 
-    # FORCE Django to use the Private Vault storage for this specific field
     kyc_video = models.FileField(
         upload_to='kyc_videos/',
         storage=storages['private_kyc'],  # <--- THE SECURITY LOCK

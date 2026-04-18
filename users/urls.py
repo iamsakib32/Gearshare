@@ -1,12 +1,13 @@
 from django.urls import path
-from .views import RegisterView, LoginView, PendingKYCView, ApproveKYCView, DeclineKYCView
+from .views import RegisterView, LoginView, PendingKYCView, ApproveKYCView, DeclineKYCView, ResubmitKYCView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
 
-    # --- ADMIN ENDPOINTS ---
+    # --- ADMIN & LIFECYCLE ENDPOINTS ---
     path('kyc-pending/', PendingKYCView.as_view(), name='kyc_pending'),
     path('kyc-approve/<int:user_id>/', ApproveKYCView.as_view(), name='kyc_approve'),
     path('kyc-decline/<int:user_id>/', DeclineKYCView.as_view(), name='kyc_decline'),
+    path('kyc-resubmit/<int:user_id>/', ResubmitKYCView.as_view(), name='kyc_resubmit'),
 ]

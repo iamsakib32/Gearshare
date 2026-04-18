@@ -5,10 +5,11 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import UserRegistrationSerializer
 from django.contrib.auth import authenticate
 from .models import CustomUser
+from django.utils import timezone
+from datetime import timedelta
 
 
 class RegisterView(APIView):
-    # This explicitly tells Django we are receiving files + text
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request):
@@ -21,22 +22,24 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     def post(self, request):
-        # We grab whatever they typed into the first box
         login_id = request.data.get('username')
         password = request.data.get('password')
 
-        # SMART LOGIC: If it has an '@', it's an email. Find the username attached to it!
         if '@' in str(login_id):
             try:
                 user_obj = CustomUser.objects.get(email=login_id)
-                login_id = user_obj.username  # Swap the email for the real username
+                login_id = user_obj.username
             except CustomUser.DoesNotExist:
-                pass  # If email doesn't exist, let it fail normally below
+                pass
 
         user = authenticate(username=login_id, password=password)
 
         if user:
-            # Safely grab the cloud URL if the picture exists
+            # --- THE BAN BOUNCER ---
+            if user.trust_tier == 'Suspended' and user.suspension_date:
+                if timezone.now() > user.suspension_date + timedelta(days=3):
+                    return Response({"error": "Account Permanently Locked"}, status=status.HTTP_403_FORBIDDEN)
+
             try:
                 profile_pic_url = user.profile_picture.url if user.profile_picture else None
             except ValueError:
@@ -44,6 +47,7 @@ class LoginView(APIView):
 
             return Response({
                 "message": "Login successful!",
+                "user_id": user.id,
                 "username": user.username,
                 "role": user.role,
                 "profile_picture": profile_pic_url,
@@ -54,16 +58,13 @@ class LoginView(APIView):
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-# --- SPRINT 2: ADMIN KYC VERIFICATION ENGINE ---
+# --- ADMIN & LIFECYCLE ENGINE ---
 
 class PendingKYCView(APIView):
     def get(self, request):
-        # Find everyone who is Unverified and NOT an admin
         pending_users = CustomUser.objects.filter(trust_tier='Unverified').exclude(role='admin')
         data = []
-
         for user in pending_users:
-            # Safely extract cloud media URLs
             try:
                 pfp_url = user.profile_picture.url if user.profile_picture else None
             except ValueError:
@@ -83,7 +84,6 @@ class PendingKYCView(APIView):
                 'profile_picture': pfp_url,
                 'kyc_video': kyc_url
             })
-
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -92,9 +92,9 @@ class ApproveKYCView(APIView):
         try:
             user = CustomUser.objects.get(id=user_id)
             user.trust_tier = 'Verified'
-            user.trust_score = 7.0  # Give them a trust boost for passing KYC!
+            user.trust_score = 7.0
+            user.kyc_attempts = 0  # Reset strikes on approval!
 
-            # THE AUTO-SHREDDER
             if user.kyc_video:
                 user.kyc_video.delete(save=False)
 
@@ -108,13 +108,37 @@ class DeclineKYCView(APIView):
     def post(self, request, user_id):
         try:
             user = CustomUser.objects.get(id=user_id)
-            user.trust_tier = 'Rejected'
 
-            # Shred the video even if they are rejected!
             if user.kyc_video:
                 user.kyc_video.delete(save=False)
+
+            # THE STRIKE SYSTEM
+            if user.kyc_attempts == 0:
+                user.trust_tier = 'Rejected'
+                user.kyc_attempts = 1
+            else:
+                user.trust_tier = 'Suspended'
+                user.suspension_date = timezone.now()
 
             user.save()
             return Response({"message": f"{user.username} Rejected!"}, status=status.HTTP_200_OK)
         except CustomUser.DoesNotExist:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class ResubmitKYCView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request, user_id):
+        try:
+            user = CustomUser.objects.get(id=user_id)
+            user.nid_passport_number = request.data.get('nid_passport_number', user.nid_passport_number)
+
+            if 'kyc_video' in request.FILES:
+                user.kyc_video = request.FILES['kyc_video']
+
+            user.trust_tier = 'Unverified'  # Send back to queue
+            user.save()
+            return Response({"message": "KYC Resubmitted"}, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
