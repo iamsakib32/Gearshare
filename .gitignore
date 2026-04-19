@@ -13,3 +13,10 @@ Gearshare/db.sqlite3
 
 # Environment Variables
 .env
+
+# Custom Scripts
+*selenium*.py
+
+#QA Assets
+.qa_assets/
+qa_assets/
