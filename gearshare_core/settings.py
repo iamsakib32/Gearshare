@@ -134,7 +134,10 @@ AUTH_USER_MODEL = 'users.CustomUser'
 # --- SUPABASE S3 CLOUD STORAGE CONFIGURATION ---
 AWS_ACCESS_KEY_ID = '1a1a9d6f744bdcf34eee96978c3afbfe'
 AWS_SECRET_ACCESS_KEY = 'cf8247ff2bed8d775c03cf727a2c3a26a4d61fc38401f9518022e9049e3670f7'
-AWS_S3_ENDPOINT_URL = 'https://kyjuuqtxpjsiyodgnjfp.storage.supabase.co/storage/v1/s3'
+
+# THE FIX IS RIGHT HERE: Removed '.storage' from the domain
+AWS_S3_ENDPOINT_URL = 'https://kyjuuqtxpjsiyodgnjfp.supabase.co/storage/v1/s3'
+
 AWS_S3_REGION_NAME = 'ap-southeast-1'
 AWS_S3_ADDRESSING_STYLE = "path"
 
