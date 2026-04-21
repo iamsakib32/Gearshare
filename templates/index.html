@@ -1,93 +1,103 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GearShare | The Smart Way to Access Tech</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: { extend: { colors: { orange: { 500: '#F97316', 600: '#C2550E' } } } }
-        }
 
-        // Prevents the flash of wrong theme before page loads
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+
+    <script>
         if (localStorage.getItem('gs-theme') === 'light' || (!('gs-theme' in localStorage) && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.remove('dark');
         }
     </script>
+
     <style>
-        body { font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
-        h1, h2, h3, .heading { font-family: 'Syne', sans-serif; }
-        /* The new custom logo font class */
-        .logo-font { font-family: 'Montserrat', sans-serif; }
+        .hero-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 10; }
 
-        .btn-orange { background: #F97316; transition: all 0.3s ease; }
-        .btn-orange:hover { background: #C2550E; box-shadow: 0 0 20px rgba(249,115,22,0.4); transform: translateY(-2px); }
-        .glow-orb { position: absolute; border-radius: 50%; filter: blur(120px); z-index: -1; }
+        /* FIX: Exactly matched Navbar Spacing */
+        .navbar { position: sticky; top: 0; z-index: 50; background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--glass-border); transition: background-color 0.3s, border-color 0.3s; }
+        .nav-container { display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; padding-bottom: 1rem; }
+        .nav-brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; }
+        .nav-links { display: flex; align-items: center; gap: 1.5rem; }
 
-        /* The Magic: Dynamic Floating Animations */
-        @keyframes float-orb-1 {
-            0% { transform: translate(0px, 0px) scale(1); opacity: 0.3; }
-            33% { transform: translate(40px, -60px) scale(1.2); opacity: 0.5; }
-            66% { transform: translate(-30px, 30px) scale(0.9); opacity: 0.2; }
-            100% { transform: translate(0px, 0px) scale(1); opacity: 0.3; }
-        }
-        @keyframes float-orb-2 {
-            0% { transform: translate(0px, 0px) scale(1); opacity: 0.2; }
-            33% { transform: translate(-50px, 40px) scale(0.85); opacity: 0.4; }
-            66% { transform: translate(30px, -40px) scale(1.15); opacity: 0.15; }
-            100% { transform: translate(0px, 0px) scale(1); opacity: 0.2; }
-        }
+        /* FIX: Restored original SVG sizing and hover states */
+        .theme-btn { background: none; border: none; cursor: pointer; color: inherit; padding: 0.5rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s; }
+        .theme-btn:hover { background-color: rgba(0,0,0,0.1); }
+        html.dark .theme-btn:hover { background-color: rgba(255,255,255,0.1); }
+        .theme-btn svg { width: 1.25rem; height: 1.25rem; }
 
-        .animate-float-1 { animation: float-orb-1 15s infinite ease-in-out; }
-        .animate-float-2 { animation: float-orb-2 18s infinite ease-in-out reverse; }
+        .nav-link { color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 0.875rem; transition: color 0.2s; }
+        .nav-link:hover { color: var(--text-main); }
+
+        .hero-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; margin-top: -10vh; }
+        .hero-badge { display: inline-block; padding: 0.375rem 1rem; border-radius: 9999px; border: 1px solid rgba(249,115,22,0.3); background: rgba(249,115,22,0.1); color: var(--orange-primary); font-size: 0.75rem; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.5rem; }
+
+        .hero-title { font-size: 3rem; margin: 0 0 1.5rem 0; line-height: 1.1; font-weight: 800; }
+        @media (min-width: 768px) { .hero-title { font-size: 4.5rem; } }
+
+        .hero-subtitle { font-size: 1.125rem; max-width: 42rem; color: var(--text-muted); margin: 0 auto 2.5rem auto; line-height: 1.625; }
+        @media (min-width: 768px) { .hero-subtitle { font-size: 1.25rem; } }
+
+        .button-group { display: flex; flex-direction: column; gap: 1rem; justify-content: center; width: 100%; max-width: 24rem; }
+        @media (min-width: 640px) { .button-group { flex-direction: row; max-width: none; width: auto; } }
+
+        .btn-large { padding: 1rem 2rem; border-radius: 0.75rem; font-size: 1.125rem; }
+        .btn-outline { background: transparent; border: 1px solid var(--input-border); color: var(--text-main); font-weight: bold; text-decoration: none; transition: background-color 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-outline:hover { background-color: rgba(0,0,0,0.05); }
+        html.dark .btn-outline:hover { background-color: rgba(255,255,255,0.05); }
     </style>
 </head>
-<body class="min-h-screen flex flex-col relative bg-gray-50 text-gray-900 dark:bg-[#0D0D0F] dark:text-[#FAFAFA] transition-colors duration-300">
+<body>
 
-    <div class="glow-orb bg-orange-400 dark:bg-orange-500 w-[500px] h-[500px] top-10 -left-32 animate-float-1"></div>
-    <div class="glow-orb bg-orange-500 dark:bg-orange-600 w-[400px] h-[400px] bottom-0 right-[-50px] animate-float-2"></div>
+    <div class="glow-orb orb-1" style="width: 500px; height: 500px; top: 2.5rem; left: -8rem;"></div>
+    <div class="glow-orb orb-2" style="width: 400px; height: 400px; bottom: 0; right: -3rem;"></div>
 
-    <nav class="sticky top-0 w-full z-50 bg-white/70 dark:bg-[#141417]/70 backdrop-blur-md border-b border-gray-200 dark:border-white/5 transition-colors duration-300">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <img src="/static/images/GearShare Logo only-Photoroom.png" alt="GearShare Logo" class="h-10 w-auto"> <h1 class="text-2xl font-bold logo-font tracking-wide text-gray-900 dark:text-white">Gear<span class="text-orange-500">Share</span></h1>
+    <div class="hero-wrapper">
+
+        <nav class="navbar">
+            <div class="max-w-7xl px-6 nav-container">
+                <a href="/" class="nav-brand">
+                    <img src="/static/images/GearShare Logo only-Photoroom.png" alt="Logo" style="height: 2.5rem;">
+                    <h1 class="logo-font" style="margin: 0; font-size: 1.5rem;">Gear<span class="text-orange">Share</span></h1>
+                </a>
+
+                <div class="nav-links">
+                    <button id="theme-toggle" class="theme-btn" title="Toggle Theme">
+                        <svg id="theme-toggle-light-icon" class="hidden text-gray-200" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path>
+                        </svg>
+                        <svg id="theme-toggle-dark-icon" class="hidden text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                        </svg>
+                    </button>
+                    <a href="/login/" class="nav-link">Sign In</a>
+                    <a href="/register/" class="btn-orange">Enter Vault</a>
+                </div>
             </div>
+        </nav>
 
-            <div class="space-x-6 flex items-center">
-                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
-                    <svg id="theme-toggle-light-icon" class="hidden w-5 h-5 text-gray-200" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path>
-                    </svg>
-                    <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-                    </svg>
-                </button>
-                <a href="/login/" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors text-sm font-medium">Sign In</a>
-                <a href="/register/" class="btn-orange text-white px-6 py-2.5 rounded-full text-sm font-bold tracking-wide shadow-lg shadow-orange-500/30">Enter Vault</a>
-            </div>
-        </div>
-    </nav>
+        <main class="hero-content px-6">
+            <div class="hero-badge">Peer-to-Peer Rental Network</div>
 
-    <main class="flex-grow flex items-center justify-center px-6 relative z-10">
-        <div class="max-w-3xl text-center mt-[-10vh]">
-            <div class="inline-block px-4 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-500 text-xs font-bold tracking-widest uppercase mb-6">
-                Peer-to-Peer Rental Network
-            </div>
-            <h2 class="text-5xl md:text-7xl font-extrabold heading mb-6 leading-tight text-gray-900 dark:text-white">
-                Rent. Use. Return.<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">Securely.</span>
+            <h2 class="hero-title heading">
+                Rent. Use. Return.<br>
+                <span class="text-orange">Securely.</span>
             </h2>
-            <p class="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+
+            <p class="hero-subtitle">
                 The trust-first platform for high-end electronic equipment and camera gear. Verified users, immutable evidence, and secure digital contracts.
             </p>
-            <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <a href="/register/" class="btn-orange text-white px-8 py-4 rounded-xl font-bold tracking-wide text-lg shadow-lg shadow-orange-500/30">Start Renting Gear</a>
-                <a href="/login/" class="px-8 py-4 rounded-xl font-bold tracking-wide text-lg text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">List Your Equipment</a>
+
+            <div class="button-group">
+                <a href="/register/" class="btn-orange btn-large">Start Renting Gear</a>
+                <a href="/login/" class="btn-outline btn-large">List Your Equipment</a>
             </div>
-        </div>
-    </main>
+        </main>
+
+    </div>
 
     <script>
         const themeToggleBtn = document.getElementById('theme-toggle');
@@ -96,17 +106,19 @@
 
         function updateIcons() {
             if (document.documentElement.classList.contains('dark')) {
-                lightIcon.classList.remove('hidden'); darkIcon.classList.add('hidden');
+                lightIcon.classList.remove('hidden');
+                darkIcon.classList.add('hidden');
             } else {
-                darkIcon.classList.remove('hidden'); lightIcon.classList.add('hidden');
+                darkIcon.classList.remove('hidden');
+                lightIcon.classList.add('hidden');
             }
         }
+
         updateIcons();
 
         themeToggleBtn.addEventListener('click', function() {
             document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
-            localStorage.setItem('gs-theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('gs-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
             updateIcons();
         });
     </script>

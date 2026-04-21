@@ -1,0 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap');
+
+:root {
+    --bg-base: #f9fafb;
+    --text-main: #111827;
+    --text-muted: #4b5563;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(229, 231, 235, 1);
+    --input-bg: #ffffff;
+    --input-border: #d1d5db;
+    --orange-primary: #F97316;
+    --orange-hover: #C2550E;
+    --danger-bg: #fee2e2;
+    --danger-text: #b91c1c;
+    --success-bg: #dcfce7;
+    --success-text: #15803d;
+}
+
+html.dark {
+    --bg-base: #0D0D0F;
+    --text-main: #FAFAFA;
+    --text-muted: #9ca3af;
+    --glass-bg: rgba(20, 20, 23, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --input-bg: #1A1A1F;
+    --input-border: rgba(255, 255, 255, 0.1);
+    --danger-bg: rgba(239, 68, 68, 0.1);
+    --danger-text: #f87171;
+    --success-bg: rgba(34, 197, 94, 0.1);
+    --success-text: #4ade80;
+}
+
+* { box-sizing: border-box; }
+
+/* Force all buttons, inputs, and dropdowns to inherit the sleek DM Sans font */
+button, input, select, textarea {
+    font-family: inherit;
+    font-size: 100%;
+}
+
+/* Force all standard headings to use the bold Syne font automatically */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Syne', sans-serif;
+}
+
+body {
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    font-family: 'DM Sans', sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    transition: background-color 0.3s, color 0.3s;
+    overflow-x: hidden;
+}
+
+/* FIX: Kill the weird dots on dropdowns */
+ul { list-style: none; margin: 0; padding: 0; }
+
+.heading { font-family: 'Syne', sans-serif; }
+.logo-font { font-family: 'Montserrat', sans-serif; }
+.text-orange { color: var(--orange-primary); }
+.hidden { display: none !important; }
+
+/* FIX: Restored Centering and Full Width */
+.text-center { text-align: center; }
+.w-full { width: 100%; }
+
+.max-w-7xl { max-width: 80rem; margin-left: auto; margin-right: auto; }
+.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    z-index: 10;
+}
+
+.btn-orange {
+    background-color: var(--orange-primary);
+    color: white;
+    padding: 0.625rem 1.5rem;
+    border-radius: 9999px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.3);
+}
+
+.btn-orange:hover {
+    background-color: var(--orange-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(249,115,22,0.4);
+}
+
+/* Inputs & Form Logic */
+.form-group { margin-bottom: 1.25rem; }
+.form-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text-main);
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+}
+.form-input:focus {
+    outline: none;
+    border-color: var(--orange-primary);
+    box-shadow: 0 0 0 1px var(--orange-primary);
+}
+
+/* FIX: Smooth Width Transitions for Register.html (No Wrapping!) */
+.form-row { display: flex; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: nowrap; }
+.col-half { width: 50%; transition: width 0.3s ease-in-out; }
+.col-full { width: 100%; transition: width 0.3s ease-in-out; }
+
+.msg-box { padding: 0.75rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: bold; text-align: center; margin-bottom: 1.5rem; }
+.msg-error { background-color: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); }
+.msg-success { background-color: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+
+/* Background Orbs */
+.glow-orb { position: absolute; border-radius: 50%; filter: blur(120px); z-index: -1; }
+.orb-1 { background-color: var(--orange-primary); animation: float-orb-1 15s infinite ease-in-out; }
+.orb-2 { background-color: var(--orange-hover); animation: float-orb-2 18s infinite ease-in-out reverse; }
+@keyframes float-orb-1 { 0% { transform: translate(0px, 0px) scale(1); opacity: 0.3; } 33% { transform: translate(40px, -60px) scale(1.2); opacity: 0.5; } 66% { transform: translate(-30px, 30px) scale(0.9); opacity: 0.2; } 100% { transform: translate(0px, 0px) scale(1); opacity: 0.3; } }
+@keyframes float-orb-2 { 0% { transform: translate(0px, 0px) scale(1); opacity: 0.2; } 33% { transform: translate(-50px, 40px) scale(0.85); opacity: 0.4; } 66% { transform: translate(30px, -40px) scale(1.15); opacity: 0.15; } 100% { transform: translate(0px, 0px) scale(1); opacity: 0.2; } }

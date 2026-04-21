@@ -1,82 +1,83 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GearShare | Secure Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+
     <script>
-        tailwind.config = { darkMode: 'class', theme: { extend: { colors: { orange: { 500: '#F97316' } } } } }
         if (localStorage.getItem('gs-theme') === 'light' || (!('gs-theme' in localStorage) && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.remove('dark');
         }
     </script>
-    <style>
-        body { font-family: 'DM Sans', sans-serif; overflow: hidden; }
-        .heading { font-family: 'Syne', sans-serif; }
-        .btn-orange { background: #F97316; transition: all 0.3s ease; }
-        .btn-orange:hover { background: #C2550E; box-shadow: 0 0 20px rgba(249,115,22,0.3); }
-        .glow-orb { position: absolute; filter: blur(100px); border-radius: 50%; z-index: -1; }
 
-        @keyframes float-orb-1 {
-            0% { transform: translate(0px, 0px) scale(1); opacity: 0.3; }
-            33% { transform: translate(30px, -40px) scale(1.1); opacity: 0.5; }
-            66% { transform: translate(-20px, 20px) scale(0.9); opacity: 0.2; }
-            100% { transform: translate(0px, 0px) scale(1); opacity: 0.3; }
-        }
-        @keyframes float-orb-2 {
-            0% { transform: translate(0px, 0px) scale(1); opacity: 0.2; }
-            33% { transform: translate(-40px, 30px) scale(0.85); opacity: 0.4; }
-            66% { transform: translate(20px, -30px) scale(1.15); opacity: 0.15; }
-            100% { transform: translate(0px, 0px) scale(1); opacity: 0.2; }
-        }
-        .animate-float-1 { animation: float-orb-1 15s infinite ease-in-out; }
-        .animate-float-2 { animation: float-orb-2 18s infinite ease-in-out reverse; }
+    <style>
+        /* ==================================================================
+           LOGIN SPECIFIC LAYOUT (Exact 1:1 match with Tailwind)
+           ================================================================== */
+
+        .login-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; position: relative; z-index: 10; overflow: hidden; }
+
+        .password-container { position: relative; display: flex; align-items: center; }
+        .toggle-password { position: absolute; right: 1rem; background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 0; transition: color 0.2s; }
+        .toggle-password:hover { color: var(--orange-primary); }
+        .toggle-password svg { width: 1.25rem; height: 1.25rem; }
+
+        .footer-links { margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; font-size: 0.875rem; text-align: center; color: var(--text-muted); }
+        .footer-links a { text-decoration: none; transition: color 0.2s; font-weight: bold; }
+        .footer-links a.primary-link { color: var(--orange-primary); }
+        .footer-links a.primary-link:hover { color: var(--orange-hover); }
+        .footer-links a.secondary-link { color: var(--text-muted); font-size: 0.75rem; font-weight: normal; }
+        .footer-links a.secondary-link:hover { color: var(--text-main); }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center relative p-4 bg-gray-50 dark:bg-[#0D0D0F] transition-colors duration-300">
+<body>
 
-    <div class="glow-orb bg-orange-400/30 dark:bg-orange-500/15 w-[400px] h-[400px] top-[-10%] left-[-10%] animate-float-1"></div>
-    <div class="glow-orb bg-orange-500/20 dark:bg-orange-600/15 w-[500px] h-[500px] bottom-[-10%] right-[-10%] animate-float-2"></div>
+    <div class="glow-orb orb-1" style="width: 400px; height: 400px; top: -10%; left: -10%;"></div>
+    <div class="glow-orb orb-2" style="width: 500px; height: 500px; bottom: -10%; right: -10%;"></div>
 
-    <div class="p-10 rounded-3xl w-full max-w-md z-10 relative bg-white/80 dark:bg-[#141417]/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 shadow-2xl transition-colors duration-300">
+    <div class="login-wrapper">
+        <div class="glass-panel" style="max-width: 28rem; width: 100%;">
 
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold heading mb-2 text-gray-900 dark:text-white">Welcome Back</h1>
-            <p class="text-gray-500 dark:text-gray-400 text-sm">Access your verified vault</p>
-        </div>
-
-        <div id="message-box" class="hidden w-full p-3 mb-6 rounded-xl text-sm font-medium text-center"></div>
-
-        <form id="login-form" class="space-y-5">
-            <div>
-                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-2 font-bold uppercase tracking-wider">Username or Email</label>
-                <input type="text" id="username" class="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-[#1A1A1F] border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all shadow-sm" placeholder="Enter username or email" required>
+            <div class="text-center" style="margin-bottom: 2rem;">
+                <h1 class="heading" style="font-size: 1.875rem; margin: 0 0 0.5rem 0;">Welcome Back</h1>
+                <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Access your verified vault</p>
             </div>
 
-            <div>
-                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-2 font-bold uppercase tracking-wider">Password</label>
-                <div class="relative">
-                    <input type="password" id="password" class="w-full px-4 py-3.5 pr-12 rounded-xl bg-white dark:bg-[#1A1A1F] border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all shadow-sm" placeholder="••••••••" required>
+            <div id="message-box" class="msg-box hidden"></div>
 
-                    <button type="button" class="toggle-password absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-orange-500 transition-colors" data-target="password">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path class="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path class="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                    </button>
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username or Email</label>
+                    <input type="text" id="username" class="form-input" style="padding: 0.875rem 1rem;" placeholder="Enter username or email" required>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <div class="password-container">
+                        <input type="password" id="password" class="form-input" style="padding: 0.875rem 3rem 0.875rem 1rem;" placeholder="••••••••" required>
+                        <button type="button" class="toggle-password" data-target="password">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path class="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path class="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-orange w-full heading" style="margin-top: 0.5rem; font-size: 1.125rem; padding: 1rem; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(249,115,22,0.3);">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="footer-links">
+                <p style="margin: 0 0 0.75rem 0;">New to GearShare? <a href="/register/" class="primary-link">Apply for Account</a></p>
+                <p style="margin: 0;"><a href="/" class="secondary-link">← Return Home</a></p>
             </div>
 
-            <button type="submit" class="w-full py-4 rounded-xl heading font-bold text-white btn-orange mt-2 text-lg shadow-lg shadow-orange-500/30">
-                Sign In
-            </button>
-        </form>
-
-        <div class="mt-8 text-center border-t border-gray-200 dark:border-gray-800 pt-6">
-            <p class="text-gray-500 dark:text-gray-400 text-sm">New to GearShare? <a href="/register/" class="text-orange-500 hover:text-orange-600 dark:hover:text-orange-400 font-bold transition-colors">Apply for Account</a></p>
-            <p class="mt-3"><a href="/" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xs transition-colors">← Return Home</a></p>
         </div>
     </div>
 
@@ -115,7 +116,7 @@
                 msgBox.classList.remove('hidden');
 
                 if (response.ok) {
-                    msgBox.className = 'w-full p-3 mb-6 rounded-xl text-sm font-bold text-center bg-green-100 dark:bg-green-500/10 border border-green-500/30 text-green-700 dark:text-green-400';
+                    msgBox.className = 'msg-box msg-success';
                     msgBox.innerText = 'Authentication Success. Initializing Vault...';
 
                     // SAVE USER DATA TO BROWSER MEMORY
@@ -130,16 +131,16 @@
                 } else {
                     // SPRINT 3: CATCH THE BAN BOUNCER
                     if (response.status === 403) {
-                        msgBox.className = 'w-full p-3 mb-6 rounded-xl text-sm font-bold text-center bg-red-100 dark:bg-red-900/40 border border-red-500/50 text-red-700 dark:text-red-400';
+                        msgBox.className = 'msg-box msg-error';
                         msgBox.innerText = 'BANNED: Your account has been permanently locked due to failed KYC verification. Contact Customer Care.';
                     } else {
-                        msgBox.className = 'w-full p-3 mb-6 rounded-xl text-sm font-bold text-center bg-red-100 dark:bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-400';
+                        msgBox.className = 'msg-box msg-error';
                         msgBox.innerText = 'Access Denied: Invalid credentials.';
                     }
                 }
             } catch (err) {
                 msgBox.classList.remove('hidden');
-                msgBox.className = 'w-full p-3 mb-6 rounded-xl text-sm font-bold text-center bg-red-100 dark:bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-400';
+                msgBox.className = 'msg-box msg-error';
                 msgBox.innerText = 'Server error. Please check your connection.';
             }
         });
