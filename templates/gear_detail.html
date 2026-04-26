@@ -1,0 +1,116 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GearShare | Equipment Details</title>
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <style>
+        .page-wrapper { min-height: 100vh; padding: 4rem 1.5rem; position: relative; z-index: 10; max-width: 80rem; margin: 0 auto; }
+
+        /* Grid Layout for the Details Page */
+        .detail-grid { display: grid; grid-template-columns: 1fr; gap: 3rem; margin-top: 2rem; }
+        @media (min-width: 768px) { .detail-grid { grid-template-columns: 1fr 1fr; } }
+
+        .img-container { width: 100%; height: 400px; border-radius: 1.5rem; overflow: hidden; border: 1px solid var(--glass-border); background: var(--glass-bg); }
+        .img-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        .info-container { display: flex; flex-direction: column; justify-content: center; }
+        .detail-badge { display: inline-block; padding: 0.375rem 1rem; border-radius: 9999px; border: 1px solid rgba(249,115,22,0.3); background: rgba(249,115,22,0.1); color: var(--orange-primary); font-size: 0.75rem; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="glow-orb orb-1" style="width: 500px; height: 500px; top: 0; right: 0;"></div>
+    <div class="glow-orb orb-2" style="width: 600px; height: 600px; bottom: 0; left: -100px;"></div>
+
+    <div class="page-wrapper">
+        <button onclick="window.history.back()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; font-weight: bold; font-size: 1rem;">
+            ← Back to Marketplace
+        </button>
+
+        <div id="loading-state" style="color: var(--text-muted); font-size: 1.25rem;">Loading equipment details...</div>
+
+        <div id="detail-content" class="detail-grid " style="display: none;">
+
+            <div class="img-container">
+                <img id="gear-image" src="" alt="Gear Image">
+            </div>
+
+            <div class="info-container glass-panel" style="padding: 2.5rem;">
+                <div class="detail-badge" id="gear-condition">Condition</div>
+
+                <h1 id="gear-title" class="heading" style="font-size: 2.5rem; font-weight: 800; margin: 0 0 0.5rem 0; color: var(--text-main);">Loading...</h1>
+
+                <p style="font-size: 1rem; color: var(--text-muted); margin: 0 0 2rem 0;">
+                    Owned by <span id="gear-owner" style="font-weight: bold; color: var(--orange-primary);">@username</span>
+                </p>
+
+                <div style="margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--glass-border);">
+                    <span id="gear-price" style="font-size: 3rem; font-weight: 900; color: var(--text-main); font-family: 'Syne', sans-serif;">৳0</span>
+                    <span style="font-size: 1.25rem; color: var(--text-muted); font-weight: 500;"> / <span id="gear-period">Day</span></span>
+                </div>
+
+                <h3 class="heading" style="font-size: 1.25rem; margin-bottom: 0.75rem;">Description & Rules</h3>
+                <p id="gear-description" style="color: var(--text-muted); line-height: 1.6; margin-bottom: 2.5rem; white-space: pre-wrap;"></p>
+
+                <button id="rent-btn" onclick="confirmRental()" class="btn-orange w-full" style="padding: 1.25rem; border-radius: 0.75rem; font-size: 1.125rem;">
+                    Confirm Rental Request
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const itemId = "{{ item_id }}";
+        const userId = localStorage.getItem('gearshare_user_id');
+
+        window.addEventListener("DOMContentLoaded", async () => {
+            try {
+                // Fetch the item's details using our existing API!
+                const response = await fetch(`/api/users/gear/info/${itemId}/`);
+                const data = await response.json();
+
+                document.getElementById('loading-state').style.display = 'none';
+                const detailContent = document.getElementById('detail-content');
+                detailContent.classList.remove('hidden'); // Force Tailwind to let go
+                detailContent.style.display = 'grid';     // Turn on the grid
+
+                // Populate the page
+                document.getElementById('gear-image').src = data.image ? data.image : 'https://via.placeholder.com/800x600?text=No+Image';
+                document.getElementById('gear-title').innerText = data.title;
+                document.getElementById('gear-owner').innerText = '@' + data.owner_username;
+                document.getElementById('gear-condition').innerText = data.condition;
+                document.getElementById('gear-price').innerText = '৳' + data.price_per_day;
+
+                // Show the dynamic period (Hour, Day, Week, Month) if it exists, otherwise default to Day
+                document.getElementById('gear-period').innerText = data.price_period || 'Day';
+                document.getElementById('gear-description').innerText = data.description;
+
+                // Logic: If the person looking at the page OWNS the item, they shouldn't be able to rent it from themselves!
+                if (data.owner_username === localStorage.getItem('gearshare_username')) {
+                    const btn = document.getElementById('rent-btn');
+                    btn.innerText = "You own this item";
+                    btn.style.background = "rgba(255,255,255,0.1)";
+                    btn.style.color = "var(--text-muted)";
+                    btn.disabled = true;
+                    btn.style.cursor = "not-allowed";
+                }
+
+            } catch (err) {
+                document.getElementById('loading-state').innerText = "Error loading equipment details.";
+            }
+        });
+
+        function confirmRental() {
+            if (!userId) {
+                alert("You must be logged in to rent equipment!");
+                window.location.href = '/login/';
+                return;
+            }
+            // For now, this just shows a success popup!
+            alert("Rental Request successfully sent to the owner! They will review it shortly.");
+        }
+    </script>
+</body>
+</html>

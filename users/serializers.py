@@ -1,6 +1,7 @@
 import re
 from rest_framework import serializers
 from .models import CustomUser
+from .models import GearItem
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -80,3 +81,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         # The moment we call .save(), Django will automatically beam the files to Supabase S3!
         user.save()
         return user
+
+class GearItemSerializer(serializers.ModelSerializer):
+    # This automatically gets the owner's username instead of just their ID number
+    owner_username = serializers.CharField(source='owner.username', read_only=True)
+
+    class Meta:
+        model = GearItem
+        fields = ['id', 'title', 'description', 'price_per_day', 'condition', 'image', 'owner_username']

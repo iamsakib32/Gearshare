@@ -1,0 +1,127 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GearShare | Add Equipment</title>
+
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+
+    <style>
+        .page-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; position: relative; z-index: 10; }
+        .form-container { max-width: 40rem; width: 100%; padding: 3rem; }
+        .file-input { width: 100%; padding: 0.625rem 1rem; border-radius: 0.75rem; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); cursor: pointer; transition: all 0.2s; }
+        .file-input::file-selector-button { background: rgba(249,115,22,0.1); color: var(--orange-primary); border: none; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: bold; cursor: pointer; margin-right: 1rem; }
+
+        /* New Select Styling for Bright Visibility */
+        .bright-select { background-color: #1f2937; color: #f9fafb; border: 1px solid var(--input-border); }
+    </style>
+</head>
+<body>
+    <div class="glow-orb orb-1" style="width: 500px; height: 500px; top: 0; right: 0;"></div>
+    <div class="glow-orb orb-2" style="width: 600px; height: 600px; bottom: 0; left: -100px;"></div>
+
+    <div class="page-wrapper">
+        <div class="glass-panel form-container border border-gray-200 dark:border-white/10 shadow-2xl">
+
+            <button onclick="window.location.href='/dashboard/'" style="background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; font-weight: bold;">
+                ← Back to Vault
+            </button>
+
+            <h2 class="heading" style="font-size: 2.25rem; font-weight: 800; margin: 0 0 0.5rem 0;">List New <span style="color: var(--orange-primary);">Equipment</span></h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Add your gear to the network to start earning securely.</p>
+
+            <div id="message-box" class="msg-box hidden"></div>
+
+            <form id="add-gear-form">
+                <div class="form-group">
+                    <label class="form-label">Equipment Title</label>
+                    <input type="text" id="title" class="form-input" placeholder="e.g., Sony A7III Body" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description & Rules</label>
+                    <textarea id="description" class="form-input" rows="4" style="resize: none;" placeholder="Include what accessories are included, known wear & tear, etc." required></textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Rate (৳)</label>
+                        <input type="number" id="price" class="form-input" placeholder="e.g., 2500" required>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Per</label>
+                        <select id="period" class="form-input bright-select" required>
+                            <option value="Hour">Hour</option>
+                            <option value="Day" selected>Day</option>
+                            <option value="Week">Week</option>
+                            <option value="Month">Month</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Condition</label>
+                        <select id="condition" class="form-input bright-select" required>
+                            <option value="Like New">Like New</option>
+                            <option value="Excellent">Excellent</option>
+                            <option value="Good" selected>Good</option>
+                            <option value="Fair">Fair</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">High-Resolution Image</label>
+                    <input type="file" id="image" accept="image/jpeg, image/png, image/webp" class="file-input" required>
+                </div>
+
+                <button type="submit" class="btn-orange w-full" style="padding: 1rem; border-radius: 0.75rem; margin-top: 1rem; font-size: 1.125rem;">
+                    Deploy to Network
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const userId = localStorage.getItem('gearshare_user_id');
+        if (!userId) window.location.href = '/login/';
+
+        document.getElementById('add-gear-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const msgBox = document.getElementById('message-box');
+            msgBox.classList.remove('hidden');
+            msgBox.className = 'msg-box';
+            msgBox.style.background = 'var(--glass-border)';
+            msgBox.innerText = 'Encrypting & Uplinking data...';
+
+            const formData = new FormData();
+            formData.append('owner_id', userId);
+            formData.append('title', document.getElementById('title').value);
+            formData.append('description', document.getElementById('description').value);
+            formData.append('price_per_day', document.getElementById('price').value);
+            formData.append('price_period', document.getElementById('period').value); // OUR NEW FIELD!
+            formData.append('condition', document.getElementById('condition').value);
+            formData.append('image', document.getElementById('image').files[0]);
+
+            try {
+                const response = await fetch('/api/users/gear/add/', { method: 'POST', body: formData });
+                if (response.ok) {
+                    msgBox.className = 'msg-box msg-success';
+                    msgBox.innerText = 'Equipment successfully added! Redirecting...';
+                    setTimeout(() => { window.location.href = '/dashboard/'; }, 1500);
+                } else {
+                    const data = await response.json();
+                    msgBox.className = 'msg-box msg-error';
+                    msgBox.innerText = data.error || 'Failed to add equipment.';
+                }
+            } catch (err) {
+                msgBox.className = 'msg-box msg-error';
+                msgBox.innerText = 'Server error. Please check your connection.';
+            }
+        });
+    </script>
+</body>
+</html>
