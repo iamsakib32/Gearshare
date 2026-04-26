@@ -7,6 +7,10 @@ from django.contrib.auth import authenticate
 from .models import CustomUser
 from django.utils import timezone
 from datetime import timedelta
+from .models import GearItem
+from .serializers import GearItemSerializer
+from django.shortcuts import render,get_object_or_404
+from django.http import JsonResponse
 
 
 class RegisterView(APIView):
@@ -142,3 +146,133 @@ class ResubmitKYCView(APIView):
             return Response({"message": "KYC Resubmitted"}, status=status.HTTP_200_OK)
         except CustomUser.DoesNotExist:
             return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class GearListView(APIView):
+    def get(self, request):
+        # Grab all gear that is currently active/available
+        items = GearItem.objects.filter(is_active=True).select_related('owner')
+        # Convert it to JSON using the serializer we just made
+        serializer = GearItemSerializer(items, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# 1. This simply loads the HTML page when you go to /add-gear/
+def add_gear_page(request):
+    return render(request, 'add_gear.html')
+
+
+# 2. This is the API that receives the form data and saves it
+class AddGearAPIView(APIView):
+    parser_classes = (MultiPartParser, FormParser)  # Allows uploading images
+
+    def post(self, request):
+        try:
+            # Get the user ID sent from the frontend JavaScript
+            owner_id = request.data.get('owner_id')
+            owner = CustomUser.objects.get(id=owner_id)
+
+            # Create the new item in the database
+            new_item = GearItem.objects.create(
+                owner=owner,
+                title=request.data.get('title'),
+                description=request.data.get('description'),
+                price_per_day=request.data.get('price_per_day'),
+                price_period=request.data.get('price_period', 'Day'),
+                condition=request.data.get('condition', 'Good'),
+            )
+
+            # If they uploaded a picture, save it to the item
+            if 'image' in request.FILES:
+                new_item.image = request.FILES['image']
+                new_item.save()
+
+            return Response({"message": "Equipment added successfully!"}, status=status.HTTP_201_CREATED)
+
+        except CustomUser.DoesNotExist:
+            return Response({"error": "User authentication failed."}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# 1. This loads the HTML page for editing
+def edit_gear_page(request, item_id): # <-- Make sure item_id is here!
+    # Make sure you are passing the dictionary {'item_id': item_id} at the end!
+    return render(request, 'edit_gear.html', {'item_id': item_id})
+
+
+# 2. This API handles fetching, updating, and deleting a specific item
+class GearDetailAPIView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
+    # GET: Fetch single item data to pre-fill the edit form
+    def get(self, request, item_id):
+        item = get_object_or_404(GearItem, id=item_id)
+        serializer = GearItemSerializer(item)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # PUT: Save the updated edits
+    def put(self, request, item_id):
+        item = get_object_or_404(GearItem, id=item_id)
+        owner_id = request.data.get('owner_id')
+
+        # SECURITY CHECK: Only the owner can edit this!
+        if str(item.owner.id) != str(owner_id):
+            return Response({"error": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
+
+        item.title = request.data.get('title', item.title)
+        item.description = request.data.get('description', item.description)
+        item.price_per_day = request.data.get('price_per_day', item.price_per_day)
+        item.condition = request.data.get('condition', item.condition)
+
+        # Only update image if a new one was uploaded
+        if 'image' in request.FILES:
+            item.image = request.FILES['image']
+
+        item.save()
+        return Response({"message": "Updated successfully!"}, status=status.HTTP_200_OK)
+
+    # DELETE: Remove the item
+    def delete(self, request, item_id):
+        item = get_object_or_404(GearItem, id=item_id)
+        # FIX: Use query_params to successfully grab the ID from the JavaScript fetch URL
+        owner_id = request.query_params.get('owner_id')
+
+        # SECURITY CHECK
+        if str(item.owner.id) != str(owner_id):
+            return Response({"error": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
+
+        item.delete()
+        return Response({"message": "Deleted successfully!"}, status=status.HTTP_200_OK)
+
+def gear_detail_page(request, item_id):
+    return render(request, 'gear_detail.html', {'item_id': item_id})
+
+
+def get_single_gear_api(request, item_id):
+    try:
+        # Find the specific item
+        item = GearItem.objects.get(id=item_id)
+
+        # Safely get the image URL
+        try:
+            image_url = item.image.url if item.image else None
+        except ValueError:
+            image_url = None
+
+        # Package the data
+        data = {
+            'id': item.id,
+            'title': item.title,
+            'description': item.description,
+            'price_per_day': item.price_per_day,
+            'price_period': getattr(item, 'price_period', 'Day'),
+            'condition': item.condition,
+            'owner_username': item.owner.username,
+            'image': image_url
+        }
+        return JsonResponse(data)
+
+    except GearItem.DoesNotExist:
+        return JsonResponse({'error': 'Equipment not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

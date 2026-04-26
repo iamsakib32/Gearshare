@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
+from users.views import add_gear_page, AddGearAPIView, GearDetailAPIView
+from users import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,4 +27,10 @@ urlpatterns = [
     path('login/', TemplateView.as_view(template_name='login.html'), name='visual_login'),
     path('register/', TemplateView.as_view(template_name='register.html'), name='visual_register'),
     path('dashboard/', TemplateView.as_view(template_name='dashboard.html'), name='dashboard'),
+    path('add-gear/', add_gear_page, name='add_gear_page'),
+    path('edit-gear/<int:item_id>/', views.edit_gear_page, name='edit_gear_page'),
+    path('api/users/gear/add/', AddGearAPIView.as_view(), name='api_add_gear'),
+    path('api/users/gear/update/<int:item_id>/', GearDetailAPIView.as_view(), name='api_gear_detail'),
+    path('gear/<int:item_id>/', views.gear_detail_page, name='gear_detail_page'),
+    path('api/users/gear/info/<int:item_id>/', views.get_single_gear_api, name='api_single_gear_info'),
 ]

@@ -17,13 +17,13 @@
     <style>
         .hero-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 10; }
 
-        /* FIX: Exactly matched Navbar Spacing */
+        /* Navbar Spacing */
         .navbar { position: sticky; top: 0; z-index: 50; background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--glass-border); transition: background-color 0.3s, border-color 0.3s; }
         .nav-container { display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; padding-bottom: 1rem; }
         .nav-brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; }
         .nav-links { display: flex; align-items: center; gap: 1.5rem; }
 
-        /* FIX: Restored original SVG sizing and hover states */
+        /* Theme Buttons */
         .theme-btn { background: none; border: none; cursor: pointer; color: inherit; padding: 0.5rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s; }
         .theme-btn:hover { background-color: rgba(0,0,0,0.1); }
         html.dark .theme-btn:hover { background-color: rgba(255,255,255,0.1); }
@@ -32,6 +32,7 @@
         .nav-link { color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 0.875rem; transition: color 0.2s; }
         .nav-link:hover { color: var(--text-main); }
 
+        /* Hero Content */
         .hero-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; margin-top: -10vh; }
         .hero-badge { display: inline-block; padding: 0.375rem 1rem; border-radius: 9999px; border: 1px solid rgba(249,115,22,0.3); background: rgba(249,115,22,0.1); color: var(--orange-primary); font-size: 0.75rem; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.5rem; }
 
@@ -48,6 +49,18 @@
         .btn-outline { background: transparent; border: 1px solid var(--input-border); color: var(--text-main); font-weight: bold; text-decoration: none; transition: background-color 0.2s; display: inline-flex; align-items: center; justify-content: center; }
         .btn-outline:hover { background-color: rgba(0,0,0,0.05); }
         html.dark .btn-outline:hover { background-color: rgba(255,255,255,0.05); }
+
+        /* Dynamic Navbar Classes */
+        .role-badge-container { display: flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 9999px; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); }
+        .pulse-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background-color: var(--orange-primary); margin-right: 0.5rem; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .role-text { font-size: 0.75rem; font-weight: bold; color: var(--orange-primary); text-transform: uppercase; letter-spacing: 0.05em; }
+        .nav-profile-wrapper { position: relative; width: 2.5rem; height: 2.5rem; border-radius: 50%; overflow: hidden; border: 2px solid rgba(249,115,22,0.5); box-shadow: 0 10px 15px -3px rgba(249,115,22,0.2); }
+        .nav-profile-pic { width: 100%; height: 100%; object-fit: cover; }
+        .logout-btn { background: none; border: none; font-size: 0.875rem; font-weight: bold; color: var(--text-muted); cursor: pointer; transition: color 0.2s; padding: 0; }
+        .logout-btn:hover { color: var(--text-main); }
+        .nav-dashboard-btn { font-size: 0.875rem; font-weight: bold; color: var(--text-main); text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); transition: 0.2s; }
+        .nav-dashboard-btn:hover { background: rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
@@ -58,13 +71,21 @@
     <div class="hero-wrapper">
 
         <nav class="navbar">
-            <div class="max-w-7xl px-6 nav-container">
+            <div class="max-w-7xl px-6 nav-container" style="width: 100%; margin: 0 auto;">
                 <a href="/" class="nav-brand">
                     <img src="/static/images/GearShare Logo only-Photoroom.png" alt="Logo" style="height: 2.5rem;">
                     <h1 class="logo-font" style="margin: 0; font-size: 1.5rem;">Gear<span class="text-orange">Share</span></h1>
                 </a>
 
                 <div class="nav-links">
+
+                    <a href="/dashboard/" id="nav-dashboard" class="nav-dashboard-btn" style="display: none;">Dashboard</a>
+
+                    <div id="nav-role-badge" class="role-badge-container" style="display: none;">
+                        <div class="pulse-dot"></div>
+                        <span id="user-role-text" class="role-text">Loading...</span>
+                    </div>
+
                     <button id="theme-toggle" class="theme-btn" title="Toggle Theme">
                         <svg id="theme-toggle-light-icon" class="hidden text-gray-200" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path>
@@ -73,8 +94,15 @@
                             <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
                         </svg>
                     </button>
-                    <a href="/login/" class="nav-link">Sign In</a>
-                    <a href="/register/" class="btn-orange">Enter Vault</a>
+
+                    <a href="/login/" id="nav-login" class="nav-link">Sign In</a>
+                    <a href="/register/" id="nav-register" class="btn-orange">Enter Vault</a>
+
+                    <div id="nav-profile" class="nav-profile-wrapper" style="display: none;">
+                        <img id="nav-profile-pic" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239CA3AF'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E" alt="Profile" class="nav-profile-pic">
+                    </div>
+                    <button onclick="logout()" id="nav-logout" class="logout-btn" style="display: none;">Sign Out</button>
+
                 </div>
             </div>
         </nav>
@@ -92,14 +120,23 @@
             </p>
 
             <div class="button-group">
-                <a href="/register/" class="btn-orange btn-large">Start Renting Gear</a>
+                <a href="#marketplace" class="btn-orange btn-large">Start Renting Gear</a>
                 <a href="/login/" class="btn-outline btn-large">List Your Equipment</a>
             </div>
         </main>
 
     </div>
 
+    <section style="max-width: 80rem; margin: 4rem auto; padding: 0 1.5rem; position: relative; z-index: 10;" id="marketplace">
+        <h2 class="heading" style="font-size: 2.5rem; font-weight: 800; margin-bottom: 2rem; color: var(--text-main);">Explore <span style="color: var(--orange-primary);">Equipment</span></h2>
+
+        <div id="public-gear-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+            <p style="color: var(--text-muted);">Loading the gear network...</p>
+        </div>
+    </section>
+
     <script>
+        // --- THEME TOGGLE LOGIC ---
         const themeToggleBtn = document.getElementById('theme-toggle');
         const darkIcon = document.getElementById('theme-toggle-dark-icon');
         const lightIcon = document.getElementById('theme-toggle-light-icon');
@@ -120,6 +157,90 @@
             document.documentElement.classList.toggle('dark');
             localStorage.setItem('gs-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
             updateIcons();
+        });
+
+        // --- AUTHENTICATION CHECKER & NAVBAR POPULATOR ---
+        const userId = localStorage.getItem('gearshare_user_id');
+        const storedRole = localStorage.getItem('gearshare_role') || 'User';
+        const storedPicUrl = localStorage.getItem('gearshare_profile_pic');
+
+        if (userId) {
+            // User IS logged in: Hide Sign In / Register
+            document.getElementById('nav-login').style.display = 'none';
+            document.getElementById('nav-register').style.display = 'none';
+
+            // Show Logged-in Elements
+            document.getElementById('nav-dashboard').style.display = 'block';
+            document.getElementById('nav-role-badge').style.display = 'flex';
+            document.getElementById('nav-profile').style.display = 'block';
+            document.getElementById('nav-logout').style.display = 'block';
+
+            // Populate text and image
+            document.getElementById('user-role-text').innerText = storedRole;
+            if (storedPicUrl && storedPicUrl !== 'null' && storedPicUrl !== 'undefined') {
+                document.getElementById('nav-profile-pic').src = storedPicUrl;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('gearshare_user_id');
+            localStorage.removeItem('gearshare_username');
+            localStorage.removeItem('gearshare_role');
+            localStorage.removeItem('gearshare_profile_pic');
+            localStorage.removeItem('gearshare_trust_tier');
+            localStorage.removeItem('gearshare_trust_score');
+            window.location.reload();
+        }
+
+        // --- FETCH PUBLIC GEAR LOGIC ---
+        document.addEventListener("DOMContentLoaded", async () => {
+            const container = document.getElementById('public-gear-container');
+            try {
+                const response = await fetch('/api/users/gear/');
+                const items = await response.json();
+
+                container.innerHTML = '';
+
+                if (items.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted);">No gear available right now. Be the first to list!</p>';
+                    return;
+                }
+
+                items.forEach(item => {
+                    const imageUrl = item.image ? item.image : 'https://via.placeholder.com/400x200?text=No+Image';
+
+                    // SMART BUTTON LOGIC
+                    let actionButtonHtml = '';
+                    if (userId) {
+                        // User is logged in: Go to the Details Page!
+                        actionButtonHtml = `<button onclick="window.location.href='/gear/${item.id}/'" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; background: var(--orange-primary); color: white; cursor: pointer; font-weight: bold;">View Details & Rent</button>`;
+                    } else {
+                        // User is NOT logged in: Force them to login
+                        actionButtonHtml = `<button onclick="window.location.href='/login/'" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; background: var(--orange-primary); color: white; cursor: pointer; font-weight: bold;">Login to Rent</button>`;
+                    }
+
+                    const cardHtml = `
+                        <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 1rem; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s;">
+                            <img src="${imageUrl}" style="width: 100%; height: 200px; object-fit: cover;">
+                            <div style="padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column;">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                                    <h3 class="heading" style="font-size: 1.25rem; font-weight: bold; margin: 0; color: var(--text-main);">${item.title}</h3>
+                                    <span style="color: var(--orange-primary); font-weight: bold; font-size: 1.125rem;">৳${item.price_per_day}</span>
+                                </div>
+                                <p style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5; flex-grow: 1; margin-bottom: 1rem;">${item.description}</p>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <span style="font-size: 0.75rem; font-weight: bold; background: rgba(128,128,128,0.1); padding: 0.25rem 0.5rem; border-radius: 0.25rem; color: var(--text-main);">${item.condition}</span>
+                                    <span style="font-size: 0.875rem; color: var(--text-muted); font-weight: 500;">@${item.owner_username}</span>
+                                </div>
+                                ${actionButtonHtml}
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += cardHtml;
+                });
+            } catch (err) {
+                container.innerHTML = '<p style="color: red;">Failed to load equipment.</p>';
+            }
         });
     </script>
 </body>

@@ -1,0 +1,160 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GearShare | Edit Equipment</title>
+
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+
+    <style>
+        .page-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; position: relative; z-index: 10; }
+        .form-container { max-width: 40rem; width: 100%; padding: 3rem; }
+        .file-input { width: 100%; padding: 0.625rem 1rem; border-radius: 0.75rem; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); cursor: pointer; transition: all 0.2s; }
+        .file-input::file-selector-button { background: rgba(249,115,22,0.1); color: var(--orange-primary); border: none; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: bold; cursor: pointer; margin-right: 1rem; }
+
+        /* Select Styling for Bright Visibility */
+        .bright-select { background-color: #1f2937; color: #f9fafb; border: 1px solid var(--input-border); }
+    </style>
+</head>
+<body>
+    <div class="glow-orb orb-1" style="width: 500px; height: 500px; top: 0; right: 0;"></div>
+    <div class="glow-orb orb-2" style="width: 600px; height: 600px; bottom: 0; left: -100px;"></div>
+
+    <div class="page-wrapper">
+        <div class="glass-panel form-container border border-gray-200 dark:border-white/10 shadow-2xl">
+
+            <button onclick="window.location.href='/dashboard/'" style="background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; font-weight: bold;">
+                ← Back to Vault
+            </button>
+
+            <h2 class="heading" style="font-size: 2.25rem; font-weight: 800; margin: 0 0 0.5rem 0;">Update <span style="color: var(--orange-primary);">Equipment</span></h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Modify your gear details below.</p>
+
+            <div id="message-box" class="msg-box hidden"></div>
+
+            <form id="edit-gear-form">
+                <div class="form-group">
+                    <label class="form-label">Equipment Title</label>
+                    <input type="text" id="title" class="form-input" placeholder="e.g., Sony A7III Body" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description & Rules</label>
+                    <textarea id="description" class="form-input" rows="4" style="resize: none;" placeholder="Include what accessories are included, known wear & tear, etc." required></textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Rate (৳)</label>
+                        <input type="number" id="price" class="form-input" placeholder="e.g., 2500" required>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Per</label>
+                        <select id="period" class="form-input bright-select" required>
+                            <option value="Hour">Hour</option>
+                            <option value="Day">Day</option>
+                            <option value="Week">Week</option>
+                            <option value="Month">Month</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Condition</label>
+                        <select id="condition" class="form-input bright-select" required>
+                            <option value="Like New">Like New</option>
+                            <option value="Excellent">Excellent</option>
+                            <option value="Good">Good</option>
+                            <option value="Fair">Fair</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Update Image (Optional)</label>
+                    <input type="file" id="image" accept="image/jpeg, image/png, image/webp" class="file-input">
+                </div>
+
+                <button type="submit" class="btn-orange w-full" style="padding: 1rem; border-radius: 0.75rem; margin-top: 1rem; font-size: 1.125rem;">
+                    Save Changes
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 1. Check Auth & Get ID
+        const userId = localStorage.getItem('gearshare_user_id');
+        if (!userId) window.location.href = '/login/';
+
+        // 2. Safely get the item ID from the URL (e.g. /edit-gear/5/ -> 5)
+        const pathArray = window.location.pathname.split('/').filter(Boolean);
+        const itemId = pathArray[pathArray.length - 1];
+
+        // 3. AUTO-FILL EXISTING DATA WHEN PAGE LOADS
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch(`/api/users/gear/info/${itemId}/`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('title').value = data.title || '';
+                    document.getElementById('description').value = data.description || '';
+                    document.getElementById('price').value = data.price_per_day || '';
+                    if(data.price_period) document.getElementById('period').value = data.price_period;
+                    if(data.condition) document.getElementById('condition').value = data.condition;
+                }
+            } catch (err) {
+                console.error("Failed to load existing gear info", err);
+            }
+        });
+
+        // 4. HANDLE SUBMISSION
+        document.getElementById('edit-gear-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const msgBox = document.getElementById('message-box');
+            msgBox.classList.remove('hidden');
+            msgBox.className = 'msg-box';
+            msgBox.style.background = 'var(--glass-border)';
+            msgBox.innerText = 'Encrypting & Uplinking data...';
+
+            const formData = new FormData();
+            formData.append('owner_id', userId);
+            formData.append('title', document.getElementById('title').value);
+            formData.append('description', document.getElementById('description').value);
+            formData.append('price_per_day', document.getElementById('price').value);
+            formData.append('price_period', document.getElementById('period').value);
+            formData.append('condition', document.getElementById('condition').value);
+
+            // Only append the image if the user actually selected a new one
+            const imageInput = document.getElementById('image');
+            if (imageInput.files.length > 0) {
+                formData.append('image', imageInput.files[0]);
+            }
+
+            try {
+                // THE TWO FIXES: 'PUT' method and the isolated 'update/' URL
+                const response = await fetch(`/api/users/gear/update/${itemId}/`, {
+                    method: 'PUT',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    msgBox.className = 'msg-box msg-success';
+                    msgBox.innerText = 'Equipment successfully updated! Redirecting...';
+                    setTimeout(() => { window.location.href = '/dashboard/'; }, 1500);
+                } else {
+                    const data = await response.json();
+                    msgBox.className = 'msg-box msg-error';
+                    msgBox.innerText = data.error || 'Failed to update equipment.';
+                }
+            } catch (err) {
+                msgBox.className = 'msg-box msg-error';
+                msgBox.innerText = 'Server error. Please check your connection.';
+            }
+        });
+    </script>
+</body>
+</html>
