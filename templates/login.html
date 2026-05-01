@@ -15,17 +15,11 @@
     </script>
 
     <style>
-        /* ==================================================================
-           LOGIN SPECIFIC LAYOUT (Exact 1:1 match with Tailwind)
-           ================================================================== */
-
         .login-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; position: relative; z-index: 10; overflow: hidden; }
-
         .password-container { position: relative; display: flex; align-items: center; }
         .toggle-password { position: absolute; right: 1rem; background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 0; transition: color 0.2s; }
         .toggle-password:hover { color: var(--orange-primary); }
         .toggle-password svg { width: 1.25rem; height: 1.25rem; }
-
         .footer-links { margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; font-size: 0.875rem; text-align: center; color: var(--text-muted); }
         .footer-links a { text-decoration: none; transition: color 0.2s; font-weight: bold; }
         .footer-links a.primary-link { color: var(--orange-primary); }
@@ -82,7 +76,6 @@
     </div>
 
     <script>
-        // --- SHOW PASSWORD TOGGLE LOGIC ---
         document.querySelectorAll('.toggle-password').forEach(button => {
             button.addEventListener('click', function() {
                 const targetId = this.getAttribute('data-target');
@@ -99,7 +92,6 @@
             });
         });
 
-        // --- BACKEND LOGIC ---
         document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const msgBox = document.getElementById('message-box');
@@ -119,17 +111,21 @@
                     msgBox.className = 'msg-box msg-success';
                     msgBox.innerText = 'Authentication Success. Initializing Vault...';
 
-                    // SAVE USER DATA TO BROWSER MEMORY
                     localStorage.setItem('gearshare_user_id', data.user_id);
                     localStorage.setItem('gearshare_username', data.username);
                     localStorage.setItem('gearshare_role', data.role);
                     localStorage.setItem('gearshare_profile_pic', data.profile_picture);
                     localStorage.setItem('gearshare_trust_tier', data.trust_tier);
                     localStorage.setItem('gearshare_trust_score', data.trust_score);
+                    localStorage.setItem('gearshare_can_switch', data.can_switch_role);
+
+                    // NEW: Keep the message saved until the dashboard opens it
+                    if (data.role_status_msg) {
+                        localStorage.setItem('gearshare_role_msg', data.role_status_msg);
+                    }
 
                     setTimeout(() => { window.location.href = '/dashboard/'; }, 1000);
                 } else {
-                    // SPRINT 3: CATCH THE BAN BOUNCER
                     if (response.status === 403) {
                         msgBox.className = 'msg-box msg-error';
                         msgBox.innerText = 'BANNED: Your account has been permanently locked due to failed KYC verification. Contact Customer Care.';
