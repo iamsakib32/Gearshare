@@ -61,6 +61,12 @@
         .logout-btn:hover { color: var(--text-main); }
         .nav-dashboard-btn { font-size: 0.875rem; font-weight: bold; color: var(--text-main); text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); transition: 0.2s; }
         .nav-dashboard-btn:hover { background: rgba(255,255,255,0.1); }
+
+        /* --- NEW: Massive Global Search Bar Styles --- */
+        .global-search-container { position: relative; max-width: 40rem; margin: 0 auto; }
+        .global-search-input { width: 100%; padding: 1.25rem 1.25rem 1.25rem 4rem; border-radius: 9999px; background: rgba(255, 255, 255, 0.05); border: 2px solid var(--glass-border); color: var(--text-main); font-size: 1.125rem; outline: none; transition: all 0.3s ease; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        .global-search-input:focus { background: rgba(255, 255, 255, 0.1); border-color: var(--orange-primary); box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15); }
+        .global-search-icon { position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); width: 1.5rem; height: 1.5rem; color: var(--text-muted); pointer-events: none; }
     </style>
 </head>
 <body>
@@ -128,6 +134,18 @@
     </div>
 
     <section style="max-width: 80rem; margin: 4rem auto; padding: 0 1.5rem; position: relative; z-index: 10;" id="marketplace">
+
+        <!-- NEW: Massive Global Search Bar Panel -->
+        <div id="global-marketplace-search" style="text-align: center; margin-bottom: 4rem;">
+            <h2 class="heading" style="font-size: 2.5rem; margin-bottom: 1.5rem;">Find Your Perfect <span style="color: var(--orange-primary);">Gear</span></h2>
+            <div class="global-search-container">
+                <svg class="global-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" id="global-search-input" class="global-search-input" placeholder="Search cameras, lenses, drones globally...">
+            </div>
+        </div>
+
         <h2 class="heading" style="font-size: 2.5rem; font-weight: 800; margin-bottom: 2rem; color: var(--text-main);">Explore <span style="color: var(--orange-primary);">Equipment</span></h2>
 
         <div id="public-gear-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
@@ -189,57 +207,87 @@
             localStorage.removeItem('gearshare_profile_pic');
             localStorage.removeItem('gearshare_trust_tier');
             localStorage.removeItem('gearshare_trust_score');
+            localStorage.removeItem('gearshare_can_switch');
             window.location.reload();
         }
 
-        // --- FETCH PUBLIC GEAR LOGIC ---
+        // --- FETCH PUBLIC GEAR LOGIC & LIVE SEARCH ---
+        let globalGearItems = [];
+
+        // Dedicated render function so search can use it freely
+        function renderPublicGearCards(items) {
+            const container = document.getElementById('public-gear-container');
+            container.innerHTML = '';
+
+            if (items.length === 0) {
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">No gear matches your search.</div>`;
+                return;
+            }
+
+            items.forEach(item => {
+                const imageUrl = item.image ? item.image : 'https://via.placeholder.com/400x200?text=No+Image';
+
+                // SMART BUTTON LOGIC
+                let actionButtonHtml = '';
+                if (userId) {
+                    actionButtonHtml = `<button onclick="window.location.href='/gear/${item.id}/'" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; background: var(--orange-primary); color: white; cursor: pointer; font-weight: bold;">View Details & Rent</button>`;
+                } else {
+                    actionButtonHtml = `<button onclick="window.location.href='/login/'" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; background: var(--orange-primary); color: white; cursor: pointer; font-weight: bold;">Login to Rent</button>`;
+                }
+
+                const cardHtml = `
+                    <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 1rem; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s;">
+                        <img src="${imageUrl}" style="width: 100%; height: 200px; object-fit: cover;">
+                        <div style="padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                                <h3 class="heading" style="font-size: 1.25rem; font-weight: bold; margin: 0; color: var(--text-main);">${item.title}</h3>
+                                <span style="color: var(--orange-primary); font-weight: bold; font-size: 1.125rem;">৳${item.price_per_day}</span>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5; flex-grow: 1; margin-bottom: 1rem;">${item.description}</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <span style="font-size: 0.75rem; font-weight: bold; background: rgba(128,128,128,0.1); padding: 0.25rem 0.5rem; border-radius: 0.25rem; color: var(--text-main);">${item.condition}</span>
+                                <span style="font-size: 0.875rem; color: var(--text-muted); font-weight: 500;">@${item.owner_username}</span>
+                            </div>
+                            ${actionButtonHtml}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+        }
+
         document.addEventListener("DOMContentLoaded", async () => {
             const container = document.getElementById('public-gear-container');
             try {
+                // Fetch the global marketplace list
                 const response = await fetch('/api/users/gear/');
-                const items = await response.json();
+                globalGearItems = await response.json();
 
-                container.innerHTML = '';
+                // Render it for the first time
+                renderPublicGearCards(globalGearItems);
 
-                if (items.length === 0) {
-                    container.innerHTML = '<p style="color: var(--text-muted);">No gear available right now. Be the first to list!</p>';
-                    return;
+                // --- LIVE SEARCH HOOK ---
+                const searchInput = document.getElementById('global-search-input');
+                if (searchInput) {
+                    searchInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') e.preventDefault(); // Stop phantom refreshes
+                    });
+
+                    searchInput.addEventListener('input', (e) => {
+                        const term = e.target.value.toLowerCase();
+
+                        const filteredItems = globalGearItems.filter(item => {
+                            return (item.title && item.title.toLowerCase().includes(term)) ||
+                                   (item.description && item.description.toLowerCase().includes(term)) ||
+                                   (item.condition && item.condition.toLowerCase().includes(term));
+                        });
+
+                        renderPublicGearCards(filteredItems);
+                    });
                 }
 
-                items.forEach(item => {
-                    const imageUrl = item.image ? item.image : 'https://via.placeholder.com/400x200?text=No+Image';
-
-                    // SMART BUTTON LOGIC
-                    let actionButtonHtml = '';
-                    if (userId) {
-                        // User is logged in: Go to the Details Page!
-                        actionButtonHtml = `<button onclick="window.location.href='/gear/${item.id}/'" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; background: var(--orange-primary); color: white; cursor: pointer; font-weight: bold;">View Details & Rent</button>`;
-                    } else {
-                        // User is NOT logged in: Force them to login
-                        actionButtonHtml = `<button onclick="window.location.href='/login/'" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; background: var(--orange-primary); color: white; cursor: pointer; font-weight: bold;">Login to Rent</button>`;
-                    }
-
-                    const cardHtml = `
-                        <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 1rem; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s;">
-                            <img src="${imageUrl}" style="width: 100%; height: 200px; object-fit: cover;">
-                            <div style="padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column;">
-                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                                    <h3 class="heading" style="font-size: 1.25rem; font-weight: bold; margin: 0; color: var(--text-main);">${item.title}</h3>
-                                    <span style="color: var(--orange-primary); font-weight: bold; font-size: 1.125rem;">৳${item.price_per_day}</span>
-                                </div>
-                                <p style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5; flex-grow: 1; margin-bottom: 1rem;">${item.description}</p>
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                    <span style="font-size: 0.75rem; font-weight: bold; background: rgba(128,128,128,0.1); padding: 0.25rem 0.5rem; border-radius: 0.25rem; color: var(--text-main);">${item.condition}</span>
-                                    <span style="font-size: 0.875rem; color: var(--text-muted); font-weight: 500;">@${item.owner_username}</span>
-                                </div>
-                                ${actionButtonHtml}
-                            </div>
-                        </div>
-                    `;
-                    container.innerHTML += cardHtml;
-                });
             } catch (err) {
-                container.innerHTML = '<p style="color: red;">Failed to load equipment.</p>';
+                container.innerHTML = '<p style="color: red;">Failed to load equipment. Server might be down.</p>';
             }
         });
     </script>

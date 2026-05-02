@@ -15,20 +15,32 @@
     </script>
 
     <style>
-        /* Navbar */
         .navbar { position: sticky; top: 0; z-index: 50; background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); transition: background-color 0.3s, border-color 0.3s; }
-        .nav-container { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; max-width: 80rem; margin: 0 auto; }
+        .nav-container { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; max-width: 80rem; margin: 0 auto; gap: 1rem; flex-wrap: wrap; }
         .nav-brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; }
-        .nav-actions { display: flex; align-items: center; gap: 1.5rem; }
+        .nav-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
 
-        /* Role Badge with Pulse */
-        .role-badge-container { display: none; align-items: center; padding: 0.25rem 0.75rem; border-radius: 9999px; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); }
+        /* Navbar Small Search */
+        .search-container { position: relative; display: flex; align-items: center; }
+        .search-input { padding: 0.5rem 1rem 0.5rem 2.5rem; border-radius: 9999px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); color: var(--text-main); font-size: 0.875rem; outline: none; transition: all 0.3s ease; width: 150px; }
+        .search-input:focus { background: rgba(255, 255, 255, 0.1); border-color: var(--orange-primary); width: 250px; box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2); }
+        .search-input::placeholder { color: var(--text-muted); }
+        .search-icon { position: absolute; left: 0.75rem; color: var(--text-muted); width: 1.25rem; height: 1.25rem; pointer-events: none; }
+
+        @media (max-width: 768px) {
+            .search-input { width: 120px; }
+            .search-input:focus { width: 100%; position: absolute; right: 0; top: -5px; z-index: 60; background: var(--glass-bg); backdrop-filter: blur(20px); }
+        }
+
+        .role-badge-container { display: none; align-items: center; padding: 0.25rem 0.75rem; border-radius: 9999px; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); border: none; outline: none; font-family: inherit; transition: all 0.2s ease; }
         @media (min-width: 640px) { .role-badge-container { display: flex; } }
+        button.role-badge-container.interactive:hover { background: rgba(249,115,22,0.2); transform: scale(1.05); cursor: pointer; }
+        .swap-icon { width: 1rem; height: 1rem; color: var(--orange-primary); margin-right: 0.375rem; transition: transform 0.3s ease; }
+        button.role-badge-container.interactive:hover .swap-icon { transform: scale(1.1); }
         .pulse-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background-color: var(--orange-primary); margin-right: 0.5rem; animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         .role-text { font-size: 0.75rem; font-weight: bold; color: var(--orange-primary); text-transform: uppercase; letter-spacing: 0.05em; }
 
-        /* Nav Buttons & Icons */
         .theme-btn { background: none; border: none; cursor: pointer; color: inherit; padding: 0.5rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s; }
         .theme-btn:hover { background-color: rgba(0,0,0,0.1); }
         html.dark .theme-btn:hover { background-color: rgba(255,255,255,0.1); }
@@ -36,19 +48,14 @@
 
         .nav-profile-wrapper { position: relative; width: 2.5rem; height: 2.5rem; border-radius: 50%; overflow: hidden; border: 2px solid rgba(249,115,22,0.5); box-shadow: 0 10px 15px -3px rgba(249,115,22,0.2); }
         .nav-profile-pic { width: 100%; height: 100%; object-fit: cover; }
-
         .logout-btn { background: none; border: none; font-size: 0.875rem; font-weight: bold; color: var(--text-muted); cursor: pointer; transition: color 0.2s; padding: 0; }
         .logout-btn:hover { color: var(--text-main); }
 
-        /* Modal */
         .modal-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
         .modal-content { max-width: 28rem; width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; }
-        .modal-icon { width: 5rem; height: 5rem; background: rgba(34,197,94,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.25rem; margin-bottom: 1.5rem; }
+        .modal-icon { width: 5rem; height: 5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; }
 
-        /* Main Content */
         .main-container { padding-top: 3rem; padding-bottom: 3rem; position: relative; z-index: 10; max-width: 80rem; margin: 0 auto; padding-left: 1.5rem; padding-right: 1.5rem; }
-
-        /* Header Section */
         .header-section { margin-bottom: 3rem; display: flex; align-items: center; gap: 1.5rem; }
         .header-profile-wrapper { display: none; width: 5rem; height: 5rem; border-radius: 50%; overflow: hidden; border: 2px solid var(--glass-border); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); flex-shrink: 0; }
         @media (min-width: 768px) { .header-profile-wrapper { display: block; } }
@@ -57,7 +64,6 @@
         .gradient-text { background-image: linear-gradient(to right, #fb923c, #ea580c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
         .header-subtitle { font-size: 1.125rem; color: var(--text-muted); max-width: 42rem; margin: 0; }
 
-        /* Stat Grid */
         .stat-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 3rem; }
         @media (min-width: 768px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
 
@@ -73,7 +79,6 @@
         .stat-subtext-badge { display: inline-block; padding: 0.25rem 0.75rem; background: rgba(0,0,0,0.05); border-radius: 0.5rem; }
         html.dark .stat-subtext-badge { background: rgba(255,255,255,0.05); }
 
-        /* Buttons for Vault Balance */
         .btn-deposit { background-color: var(--orange-primary); color: white; padding: 0.375rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: bold; border: none; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 10px 15px -3px rgba(249,115,22,0.2); }
         .btn-deposit:hover { background-color: var(--orange-hover); }
         .btn-withdraw { background-color: rgba(0,0,0,0.05); color: var(--text-main); padding: 0.375rem 1rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: bold; border: none; cursor: pointer; transition: all 0.2s ease; }
@@ -81,7 +86,6 @@
         html.dark .btn-withdraw { background-color: rgba(255,255,255,0.1); color: #FAFAFA; }
         html.dark .btn-withdraw:hover { background-color: rgba(255,255,255,0.2); }
 
-        /* State Panels */
         .panel-standard { border: 2px dashed var(--glass-border); text-align: center; padding: 4rem; transition: all 0.5s; }
         .panel-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 5rem; height: 5rem; border-radius: 50%; background: rgba(0,0,0,0.05); margin-bottom: 1.5rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.06); }
         html.dark .panel-empty-icon { background: rgba(255,255,255,0.05); }
@@ -89,12 +93,10 @@
         .panel-rejected { border: 2px solid rgba(249,115,22,0.5); background: rgba(249,115,22,0.05); padding: 2.5rem; position: relative; overflow: hidden; transition: all 0.5s; }
         .panel-suspended { border: 2px solid var(--danger-text); background: var(--danger-bg); text-align: center; padding: 3rem; transition: all 0.5s; }
 
-        /* ABSOLUTE FIX: Forced Inline File Upload Styling */
         .file-input { width: 100%; padding: 0.625rem 1rem; border-radius: 0.75rem; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); cursor: pointer; font-size: 0.875rem; font-family: inherit; transition: all 0.2s; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
         .file-input::file-selector-button { background: rgba(249,115,22,0.1); color: var(--orange-primary); border: none; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: bold; cursor: pointer; margin-right: 1rem; transition: background 0.2s; font-size: 0.75rem; font-family: inherit; }
         .file-input::file-selector-button:hover { background: rgba(249,115,22,0.2); }
 
-        /* Admin Queue Styles */
         .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
         .refresh-btn { padding: 0.5rem; background: rgba(0,0,0,0.05); border: none; border-radius: 50%; cursor: pointer; color: inherit; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
         html.dark .refresh-btn { background: rgba(255,255,255,0.1); }
@@ -129,10 +131,52 @@
 
     <div id="welcome-modal" class="modal-overlay hidden">
         <div class="glass-panel modal-content border border-gray-200 dark:border-white/10">
-            <div class="modal-icon">🎉</div>
+            <div class="modal-icon" style="background: rgba(34,197,94,0.2); color: #22c55e;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 2.5rem; height: 2.5rem; margin: auto;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
             <h2 class="heading" style="font-size: 1.875rem; font-weight: 800; margin: 0 0 0.5rem 0;">Congratulations!</h2>
             <p style="color: var(--text-muted); margin: 0 0 2rem 0;">Your KYC was approved. Let's start our journey by listing or renting an item on the network.</p>
             <button onclick="closeWelcome()" class="btn-orange w-full" style="padding: 1rem;">Let's Start</button>
+        </div>
+    </div>
+
+    <!-- Notification Modal for Approve/Reject Msgs -->
+    <div id="notification-modal" class="modal-overlay hidden">
+        <div class="glass-panel modal-content border border-gray-200 dark:border-white/10">
+            <div id="notif-icon" class="modal-icon"></div> <!-- Icon injected via JS -->
+            <h2 id="notif-title" class="heading" style="font-size: 1.875rem; font-weight: 800; margin: 0 0 0.5rem 0;">Update</h2>
+            <p id="notif-message" style="color: var(--text-muted); margin: 0 0 2rem 0;"></p>
+            <button onclick="document.getElementById('notification-modal').classList.add('hidden')" class="btn-orange w-full" style="padding: 1rem;">Okay, understood</button>
+        </div>
+    </div>
+
+    <div id="role-apply-modal" class="modal-overlay hidden">
+        <div class="glass-panel modal-content" style="max-width: 32rem; padding: 2.5rem;">
+            <h2 id="role-apply-title" class="heading" style="font-size: 1.5rem; margin-bottom: 1rem;">Apply for Role</h2>
+            <form id="role-apply-form" style="width: 100%; text-align: left;">
+                <div id="role-apply-msg" class="msg-box hidden"></div>
+
+                <div id="role-product-fields" class="hidden">
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">To become an Owner, list your first piece of gear for review.</p>
+                    <div class="form-group">
+                        <label class="form-label">Product Name</label>
+                        <input type="text" id="role-product-name" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Product Image</label>
+                        <input type="file" id="role-product-image" accept="image/*" class="file-input">
+                    </div>
+                </div>
+
+                <div id="role-renter-fields" class="hidden">
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">Apply to unlock Renter capabilities and start borrowing.</p>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" onclick="closeRoleModal()" style="flex: 1; padding: 0.75rem; border-radius: 0.5rem; border: none; cursor: pointer; background: rgba(0,0,0,0.05); color: var(--text-main); font-weight: bold;">Cancel</button>
+                    <button type="submit" class="btn-orange" style="flex: 1; padding: 0.75rem; border-radius: 0.5rem;">Submit Application</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -144,15 +188,26 @@
             </a>
 
             <div class="nav-actions">
+                <!-- Navbar Search Bar -->
+                <div class="search-container" id="search-wrapper">
+                    <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <input type="text" id="gear-search-input" class="search-input" placeholder="Search gear...">
+                </div>
 
                 <a href="/" style="font-size: 0.875rem; font-weight: bold; color: var(--text-main); text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); transition: 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
                     Browse Gear
                 </a>
 
-                <div class="role-badge-container">
+                <button id="role-badge-btn" class="role-badge-container" title="Current Role">
+                    <svg id="swap-icon" class="swap-icon" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"></path>
+                    </svg>
+
                     <div class="pulse-dot"></div>
                     <span id="user-role-badge" class="role-text">Loading...</span>
-                </div>
+                </button>
 
                 <button id="theme-toggle" class="theme-btn">
                     <svg id="theme-toggle-light-icon" class="hidden text-gray-200" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
@@ -216,6 +271,18 @@
             </div>
         </div>
 
+        <!-- NEW: Renter Call to Action Panel -->
+        <div id="renter-cta-panel" class="glass-panel hidden" style="text-align: center; padding: 4rem 2rem; margin-top: 2rem;">
+            <div class="modal-icon" style="background: rgba(249,115,22,0.1); color: var(--orange-primary); margin: 0 auto 1.5rem auto;">
+                <svg style="width: 2.5rem; height: 2.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <h3 class="heading" style="font-size: 1.875rem; margin: 0 0 0.5rem 0;">Ready to Rent?</h3>
+            <p style="color: var(--text-muted); max-width: 32rem; margin: 0 auto 2rem auto; line-height: 1.5; font-size: 1.125rem;">Browse the global marketplace to search for high-end cameras, drones, and equipment for your next project.</p>
+            <button onclick="window.location.href='/'" class="btn-orange" style="border-radius: 0.75rem; padding: 1rem 2.5rem; font-size: 1.125rem; font-weight: bold; box-shadow: 0 10px 15px -3px rgba(249,115,22,0.3);">Search Marketplace</button>
+        </div>
+
         <div id="standard-panel" class="glass-panel panel-standard hidden">
             <div class="panel-empty-icon">
                 <svg style="width: 2.5rem; height: 2.5rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -227,13 +294,14 @@
             <button onclick="window.location.href='/add-gear/'" class="btn-orange" style="border-radius: 0.75rem;">+ Add Equipment</button>
         </div>
 
+        <!-- Inventory Header -->
         <div id="gear-header" class="hidden" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; margin-top: 3rem;">
             <h2 class="heading" style="font-size: 1.875rem; margin: 0;">My <span style="color: var(--orange-primary);">Inventory</span></h2>
             <button onclick="window.location.href='/add-gear/'" class="btn-orange" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem;">+ Add More</button>
         </div>
 
-        <div id="gear-container" class="stat-grid hidden">
-            </div>
+        <!-- Main Grid for Gear -->
+        <div id="gear-container" class="stat-grid hidden"></div>
 
         <div id="rejected-panel" class="glass-panel panel-rejected hidden">
             <h3 class="heading" style="font-size: 1.875rem; color: var(--orange-primary); margin: 0 0 0.5rem 0;">KYC Verification Failed</h3>
@@ -270,14 +338,26 @@
                     <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 </button>
             </div>
+            <div id="kyc-list" class="kyc-grid"></div>
 
-            <div id="kyc-list" class="kyc-grid">
+            <div class="admin-header" style="margin-top: 4rem;">
+                <div>
+                    <h3 class="heading" style="font-size: 1.5rem; margin: 0 0 0.25rem 0;">Role Switch Requests</h3>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0;">Review Applications for Client/Owner changes.</p>
                 </div>
+                <button onclick="fetchRoleSwitchRequests()" class="refresh-btn">
+                    <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
+            </div>
+            <div id="role-switch-list" class="kyc-grid"></div>
         </div>
 
     </main>
 
     <script>
+        // Set a global variable to hold loaded gear items for instant searching
+        let loadedGearItems = [];
+
         // 1. Theme Toggle Logic
         const themeToggleBtn = document.getElementById('theme-toggle');
         const darkIcon = document.getElementById('theme-toggle-dark-icon');
@@ -306,6 +386,7 @@
         const storedPicUrl = localStorage.getItem('gearshare_profile_pic');
         const storedTier = localStorage.getItem('gearshare_trust_tier') || 'Unverified';
         const storedScore = localStorage.getItem('gearshare_trust_score') || '5.0';
+        let canSwitch = localStorage.getItem('gearshare_can_switch') === 'true';
 
         document.getElementById('display-username').innerText = storedUsername;
         document.getElementById('user-role-badge').innerText = storedRole;
@@ -321,60 +402,359 @@
             document.getElementById('header-profile-pic').src = storedPicUrl;
         }
 
-        // --- STATE ROUTER ---
+        // --- ROLE SWITCHER CLICKABLE BADGE LOGIC ---
+        const roleBadgeBtn = document.getElementById('role-badge-btn');
+        const swapIcon = document.getElementById('swap-icon');
+
+        function setupRoleBadge() {
+            if (storedRole !== 'admin') {
+                roleBadgeBtn.classList.add('interactive');
+                if (canSwitch) {
+                    roleBadgeBtn.onclick = toggleRole;
+                    roleBadgeBtn.title = `Switch to ${storedRole === 'renter' ? 'Owner' : 'Renter'}`;
+                } else {
+                    roleBadgeBtn.onclick = openRoleModal;
+                    roleBadgeBtn.title = `Apply for ${storedRole === 'renter' ? 'Owner' : 'Renter'}`;
+                }
+            } else {
+                swapIcon.classList.add('hidden');
+                roleBadgeBtn.style.cursor = 'default';
+            }
+        }
+        setupRoleBadge();
+
+        function openRoleModal() {
+            document.getElementById('role-apply-modal').classList.remove('hidden');
+            document.getElementById('role-apply-title').innerText = `Apply for ${storedRole === 'renter' ? 'Owner' : 'Renter'} Account`;
+
+            if (storedRole === 'renter') {
+                document.getElementById('role-product-fields').classList.remove('hidden');
+                document.getElementById('role-renter-fields').classList.add('hidden');
+                document.getElementById('role-product-name').required = true;
+                document.getElementById('role-product-image').required = true;
+            } else {
+                document.getElementById('role-product-fields').classList.add('hidden');
+                document.getElementById('role-renter-fields').classList.remove('hidden');
+                document.getElementById('role-product-name').required = false;
+                document.getElementById('role-product-image').required = false;
+            }
+        }
+
+        function closeRoleModal() {
+            document.getElementById('role-apply-modal').classList.add('hidden');
+        }
+
+        async function toggleRole() {
+            try {
+                const response = await fetch(`/api/users/role-switch/toggle/${storedUserId}/`, { method: 'POST' });
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('gearshare_role', data.new_role);
+                    window.location.reload();
+                } else { alert(data.error); }
+            } catch (err) { alert('Server error.'); }
+        }
+
+        document.getElementById('role-apply-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const msgBox = document.getElementById('role-apply-msg');
+            msgBox.classList.remove('hidden');
+            msgBox.className = 'msg-box';
+            msgBox.innerText = 'Submitting application...';
+
+            const formData = new FormData();
+            if (storedRole === 'renter') {
+                formData.append('product_name', document.getElementById('role-product-name').value);
+                formData.append('product_image', document.getElementById('role-product-image').files[0]);
+            }
+
+            try {
+                const response = await fetch(`/api/users/role-switch/submit/${storedUserId}/`, { method: 'POST', body: formData });
+                const data = await response.json();
+                if (response.ok) {
+                    msgBox.className = 'msg-box msg-success';
+                    msgBox.innerText = data.message;
+                    setTimeout(closeRoleModal, 2000);
+                } else {
+                    msgBox.className = 'msg-box msg-error';
+                    msgBox.innerText = data.error || 'Failed.';
+                }
+            } catch (err) { msgBox.className = 'msg-box msg-error'; msgBox.innerText = 'Server error.'; }
+        });
+
+        // --- NOTIFICATION ENGINE ---
+        const successSVG = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 2.5rem; height: 2.5rem; margin: auto;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+        const warningSVG = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 2.5rem; height: 2.5rem; margin: auto;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`;
+
+        async function checkRoleStatus() {
+            if(storedRole === 'admin') return;
+            try {
+                const response = await fetch(`/api/users/role-switch/check/${storedUserId}/`);
+                const data = await response.json();
+
+                if (data.can_switch !== undefined) {
+                    localStorage.setItem('gearshare_can_switch', data.can_switch);
+                    canSwitch = data.can_switch;
+                    setupRoleBadge();
+                }
+
+                if (data.message && data.message.trim() !== "") {
+                    document.getElementById('notif-message').innerText = data.message;
+
+                    if (data.message.includes('APPROVED')) {
+                        document.getElementById('notif-icon').innerHTML = successSVG;
+                        document.getElementById('notif-icon').style.background = 'rgba(34,197,94,0.2)';
+                        document.getElementById('notif-icon').style.color = '#22c55e';
+                        document.getElementById('notif-title').innerText = 'Application Approved!';
+                    } else {
+                        document.getElementById('notif-icon').innerHTML = warningSVG;
+                        document.getElementById('notif-icon').style.background = 'rgba(239,68,68,0.2)';
+                        document.getElementById('notif-icon').style.color = '#ef4444';
+                        document.getElementById('notif-title').innerText = 'Application Update';
+                    }
+
+                    document.getElementById('notification-modal').classList.remove('hidden');
+                }
+            } catch (e) { console.log("check failed", e); }
+        }
+
+        function checkLocalNotifications() {
+            const roleMsg = localStorage.getItem('gearshare_role_msg');
+            if (roleMsg) {
+                document.getElementById('notif-message').innerText = roleMsg;
+
+                if (roleMsg.includes('APPROVED')) {
+                    document.getElementById('notif-icon').innerHTML = successSVG;
+                    document.getElementById('notif-icon').style.background = 'rgba(34,197,94,0.2)';
+                    document.getElementById('notif-icon').style.color = '#22c55e';
+                    document.getElementById('notif-title').innerText = 'Application Approved!';
+                } else {
+                    document.getElementById('notif-icon').innerHTML = warningSVG;
+                    document.getElementById('notif-icon').style.background = 'rgba(239,68,68,0.2)';
+                    document.getElementById('notif-icon').style.color = '#ef4444';
+                    document.getElementById('notif-title').innerText = 'Application Update';
+                }
+
+                setTimeout(() => { document.getElementById('notification-modal').classList.remove('hidden'); }, 500);
+                localStorage.removeItem('gearshare_role_msg');
+            }
+        }
+
+
+        //  STATE ROUTER
+        let isWelcomeShowing = false;
+
         if (storedRole === 'admin') {
             document.getElementById('admin-panel').classList.remove('hidden');
+            document.getElementById('search-wrapper').style.display = 'none';
             fetchPendingKYC();
+            fetchRoleSwitchRequests();
         } else {
             if (storedTier === 'Verified') {
                 const welcomeKey = 'gearshare_welcomed_' + storedUserId;
                 if (!localStorage.getItem(welcomeKey)) {
                     document.getElementById('welcome-modal').classList.remove('hidden');
+                    isWelcomeShowing = true;
                 }
-                fetchAndDisplayGear();
+
+                //  RENTER UI FIX
+                if(storedRole === 'renter') {
+                    document.getElementById('search-wrapper').style.display = 'none'; // hide search bar
+                    document.getElementById('renter-cta-panel').classList.remove('hidden'); // Show CTA
+                } else {
+                    fetchAndDisplayGear(); // Owner logic
+                }
+
             } else if (storedTier === 'Rejected') {
                 document.getElementById('rejected-panel').classList.remove('hidden');
+                document.getElementById('search-wrapper').style.display = 'none';
             } else if (storedTier === 'Suspended') {
                 document.getElementById('suspended-panel').classList.remove('hidden');
+                document.getElementById('search-wrapper').style.display = 'none';
             } else {
-                fetchAndDisplayGear();
+                if(storedRole === 'owner') fetchAndDisplayGear();
+                if(storedRole === 'renter') {
+                    document.getElementById('search-wrapper').style.display = 'none';
+                    document.getElementById('renter-cta-panel').classList.remove('hidden');
+                }
             }
+        }
+
+        if (!isWelcomeShowing) {
+            checkLocalNotifications();
+            checkRoleStatus();
         }
 
         function closeWelcome() {
             document.getElementById('welcome-modal').classList.add('hidden');
             localStorage.setItem('gearshare_welcomed_' + storedUserId, 'true');
+            checkLocalNotifications();
+            checkRoleStatus();
         }
 
-        // --- RESUBMIT LOGIC ---
-        document.getElementById('resubmit-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const msgBox = document.getElementById('resubmit-msg');
-            msgBox.classList.remove('hidden');
-            msgBox.className = 'msg-box';
-            msgBox.style.background = 'var(--glass-border)';
-            msgBox.innerText = 'Uplinking new data...';
-
-            const formData = new FormData();
-            formData.append('nid_passport_number', document.getElementById('resubmit-nid').value);
-            formData.append('kyc_video', document.getElementById('resubmit-kyc').files[0]);
+        //  FETCH GEAR & RENDER LOGIC
+        async function fetchAndDisplayGear() {
+            const standardPanel = document.getElementById('standard-panel');
+            const gearHeader = document.getElementById('gear-header');
+            const gearContainer = document.getElementById('gear-container');
+            const storedUsername = localStorage.getItem('gearshare_username');
 
             try {
-                const response = await fetch(`/api/users/kyc-resubmit/${storedUserId}/`, { method: 'POST', body: formData });
-                if (response.ok) {
-                    localStorage.setItem('gearshare_trust_tier', 'Unverified');
-                    window.location.reload();
-                } else {
-                    msgBox.className = 'msg-box msg-error';
-                    msgBox.innerText = 'Upload failed. Check your network.';
-                }
-            } catch(e) {
-                msgBox.className = 'msg-box msg-error';
-                msgBox.innerText = 'Server error.';
-            }
-        });
+                const response = await fetch('/api/users/gear/');
+                const allItems = await response.json();
 
-        // --- ADMIN KYC ENGINE ---
+                // Save to global array so search can filter it later
+                loadedGearItems = allItems.filter(item => item.owner_username === storedUsername);
+
+                if (loadedGearItems.length === 0) {
+                    standardPanel.classList.remove('hidden');
+                    return;
+                }
+
+                standardPanel.classList.add('hidden');
+                gearHeader.classList.remove('hidden');
+                gearHeader.style.display = 'flex';
+                gearContainer.classList.remove('hidden');
+
+                renderGearCards(loadedGearItems);
+
+            } catch (err) { console.error("Error fetching gear:", err); }
+        }
+
+        // Separate render function to allow the search bar to redraw the grid
+        function renderGearCards(items) {
+            const gearContainer = document.getElementById('gear-container');
+            gearContainer.innerHTML = '';
+
+            if (items.length === 0) {
+                gearContainer.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">No items match your search.</div>`;
+                return;
+            }
+
+            items.forEach(item => {
+                const imageUrl = item.image ? item.image : 'https://via.placeholder.com/400x200?text=No+Image';
+
+                const actionButtons = `
+                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--glass-border);">
+                        <button onclick="window.location.href='/edit-gear/${item.id}/'" style="flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.1); border: none; border-radius: 0.5rem; color: white; cursor: pointer; font-weight: bold; transition: 0.2s;">Edit</button>
+                        <button onclick="deleteGear(${item.id})" style="flex: 1; padding: 0.5rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 0.5rem; color: #ef4444; cursor: pointer; font-weight: bold; transition: 0.2s;">Delete</button>
+                    </div>
+                `;
+
+                const cardHtml = `
+                    <div class="glass-panel stat-card" style="padding: 0; display: flex; flex-direction: column;">
+                        <img src="${imageUrl}" alt="${item.title}" style="width: 100%; height: 200px; object-fit: cover; border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+                        <div style="padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                                <h3 class="heading" style="font-size: 1.25rem; margin: 0;">${item.title}</h3>
+                                <span style="color: var(--orange-primary); font-weight: bold; font-size: 1.125rem;">৳${item.price_per_day}</span>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5; flex-grow: 1; margin-bottom: 1rem;">${item.description}</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.75rem; font-weight: bold; background: rgba(0,0,0,0.1); padding: 0.25rem 0.5rem; border-radius: 0.25rem; text-transform: uppercase;">${item.condition}</span>
+                            </div>
+                            ${actionButtons}
+                        </div>
+                    </div>
+                `;
+                gearContainer.innerHTML += cardHtml;
+            });
+        }
+
+        //  REAL-TIME SEARCH BAR LOGIC
+        const navbarSearch = document.getElementById('gear-search-input');
+        if (navbarSearch) {
+            navbarSearch.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') e.preventDefault();
+            });
+
+            navbarSearch.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const standardPanel = document.getElementById('standard-panel');
+                const gearHeader = document.getElementById('gear-header');
+                const gearContainer = document.getElementById('gear-container');
+
+                if (storedRole === 'owner') {
+                    // Hide the empty graphic and show the gear grid area to display search results
+                    standardPanel.classList.add('hidden');
+                    gearHeader.classList.remove('hidden');
+                    gearHeader.style.display = 'flex';
+                    gearContainer.classList.remove('hidden');
+
+                    const filteredItems = loadedGearItems.filter(item => {
+                        return (item.title && item.title.toLowerCase().includes(term)) ||
+                               (item.description && item.description.toLowerCase().includes(term)) ||
+                               (item.condition && item.condition.toLowerCase().includes(term));
+                    });
+
+                    renderGearCards(filteredItems);
+
+                    // If they clear the search and their inventory was originally empty, bring the empty graphic back
+                    if (term.trim() === '' && loadedGearItems.length === 0) {
+                        standardPanel.classList.remove('hidden');
+                        gearHeader.classList.add('hidden');
+                        gearContainer.classList.add('hidden');
+                    }
+                }
+            });
+        }
+
+
+        //  ADMIN ENGINES & ACTIONS
+        async function fetchRoleSwitchRequests() {
+            const list = document.getElementById('role-switch-list');
+            list.innerHTML = `<p style="color: var(--text-muted); text-align: center; width: 100%;">Scanning for requests...</p>`;
+
+            try {
+                const response = await fetch('/api/users/role-switch/pending/');
+                const requests = await response.json();
+
+                if (requests.length === 0) {
+                    list.innerHTML = `<div style="grid-column: 1 / -1; padding: 2rem; border: 1px solid var(--glass-border); border-radius: 1rem; background: rgba(0,0,0,0.02); text-align: center;"><span style="font-size: 2.25rem; display: block; margin-bottom: 0.75rem;">✅</span><h4 style="margin: 0 0 0.25rem 0; font-weight: bold;">No Pending Requests</h4></div>`;
+                    return;
+                }
+
+                list.innerHTML = '';
+                requests.forEach(req => {
+                    const productHtml = req.product_name
+                        ? `<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--glass-border);">
+                             <p style="font-size: 0.75rem; font-weight: bold; color: var(--text-muted); margin: 0 0 0.5rem 0; text-transform: uppercase;">Provided Gear:</p>
+                             <p style="margin: 0 0 0.5rem 0; font-weight: bold;">${req.product_name}</p>
+                             <img src="${req.product_image}" style="width: 100%; height: 8rem; object-fit: cover; border-radius: 0.5rem;">
+                           </div>` : '';
+
+                    list.innerHTML += `
+                        <div class="glass-panel kyc-card">
+                            <div class="kyc-top" style="margin-bottom: 0;">
+                                <div><h4 class="kyc-username">${req.username}</h4><span style="font-size: 0.75rem; font-weight: bold; color: var(--text-muted);">Wants to become: <span style="color: var(--orange-primary); text-transform: uppercase;">${req.requested_role}</span></span></div>
+                            </div>
+                            ${productHtml}
+                            <div class="kyc-actions" style="margin-top: 1rem;">
+                                <button onclick="approveRole(${req.id})" class="kyc-btn-approve">Approve</button>
+                                <button onclick="declineRole(${req.id})" class="kyc-btn-decline">Decline</button>
+                            </div>
+                        </div>`;
+                });
+            } catch (err) { list.innerHTML = `<p style="color: var(--danger-text); font-weight: bold;">Server Error.</p>`; }
+        }
+
+        async function approveRole(reqId) {
+            try {
+                const response = await fetch(`/api/users/role-switch/approve/${reqId}/`, { method: 'POST' });
+                if (response.ok) fetchRoleSwitchRequests();
+                else alert("Approval failed.");
+            } catch (err) { alert("Server Error."); }
+        }
+
+        async function declineRole(reqId) {
+            if(!confirm("Decline this role change?")) return;
+            try {
+                const response = await fetch(`/api/users/role-switch/decline/${reqId}/`, { method: 'POST' });
+                if (response.ok) fetchRoleSwitchRequests();
+                else alert("Decline failed.");
+            } catch (err) { alert("Server Error."); }
+        }
+
         async function fetchPendingKYC() {
             const kycList = document.getElementById('kyc-list');
             kycList.innerHTML = `<p style="color: var(--text-muted); text-align: center; width: 100%;">Scanning database for pending verifications...</p>`;
@@ -449,90 +829,44 @@
             } catch (err) { alert("Server Error."); }
         }
 
-        // --- FETCH GEAR LOGIC (FILTERED FOR OWNER) ---
-        async function fetchAndDisplayGear() {
-            const standardPanel = document.getElementById('standard-panel');
-            const gearHeader = document.getElementById('gear-header');
-            const gearContainer = document.getElementById('gear-container');
+        document.getElementById('resubmit-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const msgBox = document.getElementById('resubmit-msg');
+            msgBox.classList.remove('hidden');
+            msgBox.className = 'msg-box';
+            msgBox.style.background = 'var(--glass-border)';
+            msgBox.innerText = 'Uplinking new data...';
 
-            // Get the logged-in username to filter their specific items
-            const storedUsername = localStorage.getItem('gearshare_username');
+            const formData = new FormData();
+            formData.append('nid_passport_number', document.getElementById('resubmit-nid').value);
+            formData.append('kyc_video', document.getElementById('resubmit-kyc').files[0]);
 
             try {
-                const response = await fetch('/api/users/gear/');
-                const allItems = await response.json();
-
-                // NEW: Filter the items to ONLY show ones owned by the logged-in user!
-                const myItems = allItems.filter(item => item.owner_username === storedUsername);
-
-                // If the user hasn't uploaded anything themselves, show the empty panel
-                if (myItems.length === 0) {
-                    standardPanel.classList.remove('hidden');
-                    return;
+                const response = await fetch(`/api/users/kyc-resubmit/${storedUserId}/`, { method: 'POST', body: formData });
+                if (response.ok) {
+                    localStorage.setItem('gearshare_trust_tier', 'Unverified');
+                    window.location.reload();
+                } else {
+                    msgBox.className = 'msg-box msg-error';
+                    msgBox.innerText = 'Upload failed. Check your network.';
                 }
-
-                // Otherwise, show their inventory
-                standardPanel.classList.add('hidden');
-                gearHeader.classList.remove('hidden');
-                gearHeader.style.display = 'flex';
-                gearContainer.classList.remove('hidden');
-                gearContainer.innerHTML = '';
-
-                // Loop through ONLY my items
-                myItems.forEach(item => {
-                    const imageUrl = item.image ? item.image : 'https://via.placeholder.com/400x200?text=No+Image';
-
-                    // Since these are definitely their items, we ONLY show Edit and Delete buttons
-                    const actionButtons = `
-                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--glass-border);">
-                            <button onclick="window.location.href='/edit-gear/${item.id}/'" style="flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.1); border: none; border-radius: 0.5rem; color: white; cursor: pointer; font-weight: bold; transition: 0.2s;">Edit</button>
-                            <button onclick="deleteGear(${item.id})" style="flex: 1; padding: 0.5rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 0.5rem; color: #ef4444; cursor: pointer; font-weight: bold; transition: 0.2s;">Delete</button>
-                        </div>
-                    `;
-
-                    const cardHtml = `
-                        <div class="glass-panel stat-card" style="padding: 0; display: flex; flex-direction: column;">
-                            <img src="${imageUrl}" alt="${item.title}" style="width: 100%; height: 200px; object-fit: cover; border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
-                            <div style="padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column;">
-                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                                    <h3 class="heading" style="font-size: 1.25rem; margin: 0;">${item.title}</h3>
-                                    <span style="color: var(--orange-primary); font-weight: bold; font-size: 1.125rem;">৳${item.price_per_day}</span>
-                                </div>
-                                <p style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5; flex-grow: 1; margin-bottom: 1rem;">${item.description}</p>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 0.75rem; font-weight: bold; background: rgba(0,0,0,0.1); padding: 0.25rem 0.5rem; border-radius: 0.25rem; text-transform: uppercase;">${item.condition}</span>
-                                </div>
-                                ${actionButtons}
-                            </div>
-                        </div>
-                    `;
-                    gearContainer.innerHTML += cardHtml;
-                });
-            } catch (err) {
-                console.error("Error fetching gear:", err);
+            } catch(e) {
+                msgBox.className = 'msg-box msg-error';
+                msgBox.innerText = 'Server error.';
             }
-        }
+        });
 
-        // --- DELETE LOGIC ---
         async function deleteGear(itemId) {
-            // 1. Double check they actually want to delete it
             if (!confirm("Are you sure you want to permanently delete this equipment?")) {
                 return;
             }
-
-            // 2. Get the correct User ID from memory
             const userId = localStorage.getItem('gearshare_user_id');
-
             try {
-                // 3. THE FIX: Attach the owner_id directly to the URL string (query parameter)
                 const response = await fetch(`/api/users/gear/update/${itemId}/?owner_id=${userId}`, {
                     method: 'DELETE',
-                    // We no longer need the 'body' or 'headers' here because it's in the URL!
                 });
-
                 if (response.ok) {
                     alert('Equipment deleted successfully!');
-                    // Reload the page to remove the deleted item from the screen
                     window.location.reload();
                 } else {
                     const data = await response.json();
@@ -543,7 +877,6 @@
             }
         }
 
-        // 3. Logout
         function logout() {
             localStorage.removeItem('gearshare_user_id');
             localStorage.removeItem('gearshare_username');
@@ -551,6 +884,8 @@
             localStorage.removeItem('gearshare_profile_pic');
             localStorage.removeItem('gearshare_trust_tier');
             localStorage.removeItem('gearshare_trust_score');
+            localStorage.removeItem('gearshare_can_switch');
+
             window.location.href = '/login/';
         }
     </script>

@@ -23,16 +23,20 @@ class CustomUser(AbstractUser):
 
     kyc_video = models.FileField(
         upload_to='kyc_videos/',
-        storage=storages['private_kyc'],  # <--- THE SECURITY LOCK
+        storage=storages['private_kyc'],
         blank=True,
         null=True
     )
 
+    # NEW: Acts as a key. If true, the user can switch between Owner/Renter
+    can_switch_role = models.BooleanField(default=False)
+
+    # NEW: message to show user alert later
+    role_status_msg = models.CharField(max_length=255, blank=True, null=True)
+
     def __str__(self):
         return self.username
 
-
-# ... (keep all your CustomUser code above this) ...
 
 class GearItem(models.Model):
     CONDITION_CHOICES = (
@@ -42,21 +46,30 @@ class GearItem(models.Model):
         ('Fair', 'Fair'),
     )
 
-    # Links this item to the specific user who owns it
     owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='gear_items')
-
     title = models.CharField(max_length=200)
     description = models.TextField()
     price_per_day = models.DecimalField(max_digits=10, decimal_places=2)
     price_period = models.CharField(max_length=20, default='Day')
     condition = models.CharField(max_length=50, choices=CONDITION_CHOICES, default='Good')
-
-    # Stores the picture of the gear
     image = models.ImageField(upload_to='gear_images/', blank=True, null=True)
-
-    # If the item is currently rented or hidden, the owner can set this to False
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.title} (Owned by: {self.owner.username})"
+
+
+# Stores the application when a Renter wants to become an Owner (or vice versa)
+class RoleSwitchRequest(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='role_switch_requests')
+    current_role = models.CharField(max_length=10)
+    requested_role = models.CharField(max_length=10)
+    status = models.CharField(max_length=20, default='Pending')  # Pending, Approved, Rejected
+
+    product_name = models.CharField(max_length=200, blank=True, null=True)
+    product_image = models.ImageField(upload_to='role_request_products/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} wants to be {self.requested_role}"
