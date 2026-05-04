@@ -192,14 +192,28 @@ class AddGearAPIView(APIView):
         try:
             owner_id = request.data.get('owner_id')
             owner = CustomUser.objects.get(id=owner_id)
+
+            # --- THE FIX: CAPTURE NEW PREMIUM UI FIELDS ---
             new_item = GearItem.objects.create(
-                owner=owner, title=request.data.get('title'),
-                description=request.data.get('description'), price_per_day=request.data.get('price_per_day'),
-                price_period=request.data.get('price_period', 'Day'), condition=request.data.get('condition', 'Good'),
+                owner=owner,
+                title=request.data.get('title'),
+                description=request.data.get('description'),
+                price_per_day=request.data.get('price_per_day'),
+                price_period=request.data.get('price_period', 'Day'),
+                condition=request.data.get('condition', 'Good'),
+                category=request.data.get('category', 'Other'),
+                replacement_value=request.data.get('replacement_value') or 0.00,
+                min_rental_duration=request.data.get('min_rental_duration', '1 day'),
+                available_days=request.data.get('available_days', 'S,M,T,W,Th,F,Sa'),
+                delivery_option=request.data.get('delivery_option', 'Pickup only'),
+                pickup_location=request.data.get('pickup_location', ''),
+                cancellation_policy=request.data.get('cancellation_policy', 'flexible')
             )
+
             if 'image' in request.FILES:
                 new_item.image = request.FILES['image']
-                new_item.save()
+
+            new_item.save()
             return Response({"message": "Equipment added successfully!"}, status=status.HTTP_201_CREATED)
         except CustomUser.DoesNotExist:
             return Response({"error": "User authentication failed."}, status=status.HTTP_401_UNAUTHORIZED)
@@ -224,12 +238,26 @@ class GearDetailAPIView(APIView):
         owner_id = request.data.get('owner_id')
         if str(item.owner.id) != str(owner_id):
             return Response({"error": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
+
+        # --- THE FIX: ALLOW EDITING FOR NEW FIELDS ---
         item.title = request.data.get('title', item.title)
         item.description = request.data.get('description', item.description)
         item.price_per_day = request.data.get('price_per_day', item.price_per_day)
+        item.price_period = request.data.get('price_period', item.price_period)
         item.condition = request.data.get('condition', item.condition)
+        item.category = request.data.get('category', getattr(item, 'category', 'Other'))
+        item.replacement_value = request.data.get('replacement_value', getattr(item, 'replacement_value', 0.00)) or 0.00
+        item.min_rental_duration = request.data.get('min_rental_duration',
+                                                    getattr(item, 'min_rental_duration', '1 day'))
+        item.available_days = request.data.get('available_days', getattr(item, 'available_days', 'S,M,T,W,Th,F,Sa'))
+        item.delivery_option = request.data.get('delivery_option', getattr(item, 'delivery_option', 'Pickup only'))
+        item.pickup_location = request.data.get('pickup_location', getattr(item, 'pickup_location', ''))
+        item.cancellation_policy = request.data.get('cancellation_policy',
+                                                    getattr(item, 'cancellation_policy', 'flexible'))
+
         if 'image' in request.FILES:
             item.image = request.FILES['image']
+
         item.save()
         return Response({"message": "Updated successfully!"}, status=status.HTTP_200_OK)
 
@@ -253,10 +281,24 @@ def get_single_gear_api(request, item_id):
             image_url = item.image.url if item.image else None
         except ValueError:
             image_url = None
+
+        # --- THE FIX: PASS NEW FIELDS TO AUTO-FILL THE EDIT PAGE ---
         data = {
-            'id': item.id, 'title': item.title, 'description': item.description,
-            'price_per_day': item.price_per_day, 'price_period': getattr(item, 'price_period', 'Day'),
-            'condition': item.condition, 'owner_username': item.owner.username, 'image': image_url
+            'id': item.id,
+            'title': item.title,
+            'description': item.description,
+            'price_per_day': item.price_per_day,
+            'price_period': getattr(item, 'price_period', 'Day'),
+            'condition': item.condition,
+            'owner_username': item.owner.username,
+            'image': image_url,
+            'category': getattr(item, 'category', 'Other'),
+            'replacement_value': getattr(item, 'replacement_value', 0.00),
+            'min_rental_duration': getattr(item, 'min_rental_duration', '1 day'),
+            'available_days': getattr(item, 'available_days', 'S,M,T,W,Th,F,Sa'),
+            'delivery_option': getattr(item, 'delivery_option', 'Pickup only'),
+            'pickup_location': getattr(item, 'pickup_location', ''),
+            'cancellation_policy': getattr(item, 'cancellation_policy', 'flexible')
         }
         return JsonResponse(data)
     except GearItem.DoesNotExist:

@@ -88,4 +88,4 @@ class GearItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GearItem
-        fields = ['id', 'title', 'description', 'price_per_day', 'condition', 'image', 'owner_username']
+        fields = '__all__'
