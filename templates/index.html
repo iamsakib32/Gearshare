@@ -259,8 +259,14 @@
         document.addEventListener("DOMContentLoaded", async () => {
             const container = document.getElementById('public-gear-container');
             try {
-                // Fetch the global marketplace list
-                const response = await fetch('/api/users/gear/');
+                // 1. Grab the user ID
+                const currentUserId = localStorage.getItem('gearshare_user_id');
+
+                // 2. Pass the user ID to the backend!
+                const fetchUrl = currentUserId ? `/api/users/gear/?user_id=${currentUserId}` : '/api/users/gear/';
+
+                // Fetch the global marketplace list using the new URL
+                const response = await fetch(fetchUrl);
                 globalGearItems = await response.json();
 
                 // Render it for the first time

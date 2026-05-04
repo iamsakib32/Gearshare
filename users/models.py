@@ -18,6 +18,9 @@ class CustomUser(AbstractUser):
     kyc_attempts = models.IntegerField(default=0)
     suspension_date = models.DateTimeField(null=True, blank=True)
 
+    # ADD THIS LINE BACK IN to satisfy your teammate's database migration!
+    transaction_count = models.IntegerField(default=0)
+
     # --- CLOUD MEDIA FIELDS ---
     profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
 
@@ -54,6 +57,11 @@ class GearItem(models.Model):
     condition = models.CharField(max_length=50, choices=CONDITION_CHOICES, default='Good')
     image = models.ImageField(upload_to='gear_images/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
+
+    # --- SCRUM-32: Tier Restriction Field ---
+    # 1 = Unverified/Guests, 2 = Verified Only
+    min_trust_tier = models.IntegerField(default=7)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
