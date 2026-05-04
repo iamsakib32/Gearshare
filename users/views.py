@@ -145,9 +145,38 @@ class ResubmitKYCView(APIView):
             return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
+# --- HELPER FUNCTION FOR SCRUM-32 ---
+def get_user_tier_level(tier_string):
+    tier_mapping = {
+        'Suspended': 0,
+        'Rejected': 1,
+        'Unverified': 1,
+        'Verified': 2,
+    }
+    return tier_mapping.get(tier_string, 1)
+
+
 class GearListView(APIView):
     def get(self, request):
-        items = GearItem.objects.filter(is_active=True).select_related('owner')
+        user_id = request.query_params.get('user_id')
+
+        # Default to a score of 1.0 for unauthenticated guests
+        user_clearance = 1.0
+
+        if user_id:
+            try:
+                user = CustomUser.objects.get(id=user_id)
+                # USE THE ACTUAL NUMERIC SCORE FROM THE DASHBOARD!
+                user_clearance = user.trust_score
+            except CustomUser.DoesNotExist:
+                pass
+
+        # Filter items where the required tier is <= the user's trust score
+        items = GearItem.objects.filter(
+            is_active=True,
+            min_trust_tier__lte=user_clearance
+        ).select_related('owner')
+
         serializer = GearItemSerializer(items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -236,9 +265,7 @@ def get_single_gear_api(request, item_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-
 # ROLE SWITCHER API ENDPOINTS
-
 
 class SubmitRoleSwitchAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
@@ -284,8 +311,6 @@ class ApproveRoleSwitchAPIView(APIView):
         user.can_switch_role = True
         user.role_status_msg = "APPROVED: Congratulations! Your application to switch roles was approved."
         user.save()
-
-
 
         return Response({"message": "Approved!"}, status=status.HTTP_200_OK)
 
