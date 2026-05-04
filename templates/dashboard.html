@@ -639,9 +639,10 @@
             items.forEach(item => {
                 const imageUrl = item.image ? item.image : 'https://via.placeholder.com/400x200?text=No+Image';
 
+                // THE FIX: Changed background and color variables on the Edit button for perfect Light/Dark mode support!
                 const actionButtons = `
                     <div style="display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--glass-border);">
-                        <button onclick="window.location.href='/edit-gear/${item.id}/'" style="flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.1); border: none; border-radius: 0.5rem; color: white; cursor: pointer; font-weight: bold; transition: 0.2s;">Edit</button>
+                        <button onclick="window.location.href='/edit-gear/${item.id}/'" style="flex: 1; padding: 0.5rem; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 0.5rem; color: var(--text-main); cursor: pointer; font-weight: bold; transition: 0.2s;">Edit</button>
                         <button onclick="deleteGear(${item.id})" style="flex: 1; padding: 0.5rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 0.5rem; color: #ef4444; cursor: pointer; font-weight: bold; transition: 0.2s;">Delete</button>
                     </div>
                 `;

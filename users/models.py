@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.files.storage import storages
 
-
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
         ('renter', 'Renter'),
@@ -14,14 +13,11 @@ class CustomUser(AbstractUser):
     trust_score = models.FloatField(default=5.0)
     trust_tier = models.CharField(max_length=20, default='Unverified')
 
-    # --- SPRINT 3: LIFECYCLE MANAGEMENT ---
     kyc_attempts = models.IntegerField(default=0)
     suspension_date = models.DateTimeField(null=True, blank=True)
 
-    # ADD THIS LINE BACK IN to satisfy your teammate's database migration!
     transaction_count = models.IntegerField(default=0)
 
-    # --- CLOUD MEDIA FIELDS ---
     profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
 
     kyc_video = models.FileField(
@@ -31,10 +27,7 @@ class CustomUser(AbstractUser):
         null=True
     )
 
-    # NEW: Acts as a key. If true, the user can switch between Owner/Renter
     can_switch_role = models.BooleanField(default=False)
-
-    # NEW: message to show user alert later
     role_status_msg = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -43,10 +36,8 @@ class CustomUser(AbstractUser):
 
 class GearItem(models.Model):
     CONDITION_CHOICES = (
-        ('Like New', 'Like New'),
-        ('Excellent', 'Excellent'),
-        ('Good', 'Good'),
-        ('Fair', 'Fair'),
+        ('Like New', 'Like New'), ('Excellent', 'Excellent'),
+        ('Good', 'Good'), ('Fair', 'Fair'),
     )
 
     owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='gear_items')
@@ -58,22 +49,36 @@ class GearItem(models.Model):
     image = models.ImageField(upload_to='gear_images/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
 
-    # --- SCRUM-32: Tier Restriction Field ---
-    # 1 = Unverified/Guests, 2 = Verified Only
-    min_trust_tier = models.IntegerField(default=7)
+    category = models.CharField(max_length=50, default='Other')
+    replacement_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    min_rental_duration = models.CharField(max_length=50, default='1 day')
+    available_days = models.CharField(max_length=100, default='S,M,T,W,Th,F,Sa')
+    delivery_option = models.CharField(max_length=50, default='Pickup only')
+    pickup_location = models.CharField(max_length=255, blank=True, null=True)
+    cancellation_policy = models.CharField(max_length=50, default='flexible')
 
+    min_trust_tier = models.IntegerField(default=7)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.title} (Owned by: {self.owner.username})"
 
 
-# Stores the application when a Renter wants to become an Owner (or vice versa)
+# --- THE FIX: NEW CLOUD GALLERY MODEL ---
+class GearImage(models.Model):
+    gear = models.ForeignKey(GearItem, on_delete=models.CASCADE, related_name='gallery_images')
+    image = models.ImageField(upload_to='gear_gallery/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Gallery Photo for {self.gear.title}"
+
+
 class RoleSwitchRequest(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='role_switch_requests')
     current_role = models.CharField(max_length=10)
     requested_role = models.CharField(max_length=10)
-    status = models.CharField(max_length=20, default='Pending')  # Pending, Approved, Rejected
+    status = models.CharField(max_length=20, default='Pending')
 
     product_name = models.CharField(max_length=200, blank=True, null=True)
     product_image = models.ImageField(upload_to='role_request_products/', blank=True, null=True)
