@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.files.storage import storages
 
+
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
         ('renter', 'Renter'),
@@ -46,6 +47,8 @@ class GearItem(models.Model):
     price_per_day = models.DecimalField(max_digits=10, decimal_places=2)
     price_period = models.CharField(max_length=20, default='Day')
     condition = models.CharField(max_length=50, choices=CONDITION_CHOICES, default='Good')
+
+    # This acts as the mandatory cover photo
     image = models.ImageField(upload_to='gear_images/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
 
@@ -64,8 +67,9 @@ class GearItem(models.Model):
         return f"{self.title} (Owned by: {self.owner.username})"
 
 
-# --- THE FIX: NEW CLOUD GALLERY MODEL ---
-class GearImage(models.Model):
+# --- CLOUD GALLERY MODEL ---
+class GearGallery(models.Model):
+    # This links the extra 2 to 4 photos directly back to the specific GearItem
     gear = models.ForeignKey(GearItem, on_delete=models.CASCADE, related_name='gallery_images')
     image = models.ImageField(upload_to='gear_gallery/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
@@ -86,3 +90,24 @@ class RoleSwitchRequest(models.Model):
 
     def __str__(self):
         return f"{self.user.username} wants to be {self.requested_role}"
+
+
+# --- NEW: RENTAL REQUEST & CHAT BASELINE ---
+class RentalRequest(models.Model):
+    STATUS_CHOICES = (
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Declined', 'Declined'),
+        ('Completed', 'Completed'),
+    )
+
+    gear = models.ForeignKey(GearItem, on_delete=models.CASCADE, related_name='rental_requests')
+    renter = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='rentals_made')
+    owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='rentals_received')
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Request: {self.renter.username} -> {self.gear.title}"
