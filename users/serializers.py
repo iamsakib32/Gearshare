@@ -1,7 +1,6 @@
 import re
 from rest_framework import serializers
-from .models import CustomUser
-from .models import GearItem
+from .models import CustomUser, GearItem, GearGallery
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -52,7 +51,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         else:
             if not data.get('nid_passport_number'):
                 raise serializers.ValidationError({
-                                                      "nid_passport_number": "Security Alert: NID/Passport is strictly required for Renters and Owners."})
+                    "nid_passport_number": "Security Alert: NID/Passport is strictly required for Renters and Owners."})
 
         return data
 
@@ -82,9 +81,20 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+
+# --- NEW CLOUD GALLERY SERIALIZER ---
+class GearGallerySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GearGallery
+        fields = ['id', 'image']
+
+
 class GearItemSerializer(serializers.ModelSerializer):
     # This automatically gets the owner's username instead of just their ID number
     owner_username = serializers.CharField(source='owner.username', read_only=True)
+
+    # --- NEST THE GALLERY IMAGES ---
+    gallery_images = GearGallerySerializer(many=True, read_only=True)
 
     class Meta:
         model = GearItem

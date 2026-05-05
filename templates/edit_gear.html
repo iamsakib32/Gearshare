@@ -127,7 +127,7 @@
 
             <!-- THE FIX: The Notice Banner -->
             <div class="gs-notice">
-                <strong>Why are some fields locked?</strong> Renters book based on the Title, Category, and Rate. Changing these mid-booking would be unfair and violate the network terms. You can freely update availability, photos, and policies.
+                <strong>Why are some fields locked?</strong> Renters book based on the Title, Category, Rate, and Photos. Changing these mid-booking would be unfair and violate the network terms. You can freely update availability and policies.
             </div>
 
             <div id="message-box" class="msg-box hidden"></div>
@@ -136,12 +136,12 @@
 
                 <!-- THE FIX: Disabled inputs with the Lock Badge -->
                 <div class="gs-field">
-                    <label class="gs-label">Equipment title <span class="lock-badge">🔒 locked</span></label>
+                    <label class="gs-label">Equipment title <span class="lock-badge"><svg style="width: 10px; height: 10px; display: inline;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> locked</span></label>
                     <input type="text" id="title" placeholder="e.g., Sony A7III Body" disabled />
                 </div>
 
                 <div class="gs-field">
-                    <label class="gs-label">Category <span class="lock-badge">🔒 locked</span></label>
+                    <label class="gs-label">Category <span class="lock-badge"><svg style="width: 10px; height: 10px; display: inline;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> locked</span></label>
                     <div class="dropdown-container">
                         <input type="hidden" id="category" value="Camera Body">
                         <!-- THE FIX: Added .disabled class to button -->
@@ -160,11 +160,11 @@
 
                 <div class="gs-row gs-row-3">
                     <div>
-                        <label class="gs-label">Rate (৳) <span class="lock-badge">🔒</span></label>
+                        <label class="gs-label">Rate (৳) <span class="lock-badge"><svg style="width: 10px; height: 10px; display: inline;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></span></label>
                         <input type="number" id="price" placeholder="2500" disabled />
                     </div>
                     <div>
-                        <label class="gs-label">Per <span class="lock-badge">🔒</span></label>
+                        <label class="gs-label">Per <span class="lock-badge"><svg style="width: 10px; height: 10px; display: inline;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></span></label>
                         <div class="dropdown-container">
                             <input type="hidden" id="period" value="Day">
                             <!-- THE FIX: Added .disabled class to button -->
@@ -256,16 +256,17 @@
                     </div>
                 </div>
 
-                <div class="gs-section">Update Photo (Optional)</div>
+                <div class="gs-section">Photos</div>
 
-                <div class="gs-upload" onclick="document.getElementById('image').click()">
-                    <div class="gs-upload-icon">📷</div>
-                    <div style="font-size:14px; font-weight:bold; color:var(--text-main); margin-bottom:4px;">Upload new cover photo</div>
-                    <div class="gs-hint" id="file-name-display">JPG, PNG, or WEBP, max 10MB.</div>
-                    <input type="file" id="image" accept="image/*" style="display: none;" onchange="document.getElementById('file-name-display').innerText = this.files[0].name; document.getElementById('file-name-display').style.color = 'var(--orange-primary)';">
+                <!-- THE FIX: Locked photo section logic with disabled styling -->
+                <div class="gs-upload disabled" style="cursor: not-allowed; opacity: 0.5; background: rgba(0,0,0,0.05); border-color: var(--glass-border);" onclick="alert('Photos cannot be altered after listing to protect renters from bait-and-switch scams. If you need to update the images, please delete this item and create a new listing.');">
+                    <svg style="width: 2.5rem; height: 2.5rem; color: var(--text-muted); margin: 0 auto 0.5rem auto;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <div style="font-size:14px; font-weight:bold; color:var(--text-main); margin-bottom:4px;">Gear photos <span class="lock-badge"><svg style="width: 10px; height: 10px; display: inline;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> locked</span></div>
+                    <div class="gs-hint" id="file-name-display">Images cannot be modified after listing to ensure renter safety.</div>
+                    <input type="file" id="images" disabled style="display: none;">
                 </div>
 
-                <button type="submit" class="btn-orange w-full" style="padding: 1.25rem; border-radius: 0.75rem; font-size: 1.125rem; font-weight: bold; box-shadow: 0 10px 20px -5px rgba(249,115,22,0.4);">
+                <button type="submit" class="btn-orange w-full" style="padding: 1.25rem; border-radius: 0.75rem; font-size: 1.125rem; font-weight: bold; box-shadow: 0 10px 20px -5px rgba(249,115,22,0.4); margin-top: 1rem;">
                     Save Changes
                 </button>
             </form>
@@ -399,7 +400,7 @@
             const formData = new FormData();
             formData.append('owner_id', userId);
 
-            // THE FIX: Do NOT append Title, Category, Price, or Period.
+            // THE FIX: Do NOT append Title, Category, Price, Period, or Images.
             // The backend shouldn't receive them anyway since they are disabled!
             formData.append('description', document.getElementById('description').value);
             formData.append('condition', document.getElementById('condition').value);
@@ -409,11 +410,6 @@
             formData.append('delivery_option', deliveryOption);
             formData.append('pickup_location', document.getElementById('pickup_location').value);
             formData.append('cancellation_policy', policyOption);
-
-            const imageInput = document.getElementById('image');
-            if (imageInput.files.length > 0) {
-                formData.append('image', imageInput.files[0]);
-            }
 
             try {
                 const response = await fetch(`/api/users/gear/update/${itemId}/`, {

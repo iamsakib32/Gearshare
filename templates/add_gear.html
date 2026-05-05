@@ -67,7 +67,6 @@
 
         /* Trust & Policies */
         .gs-trust { background: rgba(249,115,22,0.05); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: flex-start; gap: 12px; border: 1px solid rgba(249,115,22,0.2); }
-        .gs-trust-icon { font-size: 20px; }
         .gs-trust-text { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
         .gs-trust-text strong { color: var(--text-main); font-weight: bold; }
 
@@ -94,7 +93,6 @@
         .gs-upload { border: 2px dashed var(--input-border); border-radius: 0.75rem; padding: 2rem; text-align: center; cursor: pointer; transition: border-color 0.2s; background: rgba(0,0,0,0.02); margin-bottom: 1.5rem; }
         html.dark .gs-upload { background: rgba(255,255,255,0.02); }
         .gs-upload:hover { border-color: var(--orange-primary); background: rgba(249,115,22,0.05); }
-        .gs-upload-icon { font-size: 32px; margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -250,15 +248,17 @@
 
                 <div class="gs-section">Photos</div>
 
-                <div class="gs-upload" onclick="document.getElementById('image').click()">
-                    <div class="gs-upload-icon">📷</div>
-                    <div style="font-size:14px; font-weight:bold; color:var(--text-main); margin-bottom:4px;">Upload cover photo</div>
-                    <div class="gs-hint" id="file-name-display">JPG, PNG, or WEBP, max 10MB.</div>
-                    <input type="file" id="image" accept="image/*" required style="display: none;" onchange="document.getElementById('file-name-display').innerText = this.files[0].name; document.getElementById('file-name-display').style.color = 'var(--orange-primary)';">
+                <!-- 100% FIXED: 3 to 5 images logic & safe SVG Icon -->
+                <div class="gs-upload" onclick="document.getElementById('images').click()">
+                    <svg style="width: 2.5rem; height: 2.5rem; color: var(--text-muted); margin: 0 auto 0.5rem auto;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <div style="font-size:14px; font-weight:bold; color:var(--text-main); margin-bottom:4px;">Upload gear photos</div>
+                    <div class="gs-hint" id="file-name-display">Select exactly 3 to 5 photos (JPG, PNG, WEBP).</div>
+                    <input type="file" id="images" accept="image/*" multiple required style="display: none;" onchange="handleFileSelect(this)">
                 </div>
 
+                <!-- 100% FIXED: Safe SVG Icon -->
                 <div class="gs-trust">
-                    <div class="gs-trust-icon">🔒</div>
+                    <svg style="width: 1.5rem; height: 1.5rem; color: var(--orange-primary); flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     <div class="gs-trust-text">
                         <strong>Your listing is protected.</strong> GearShare holds a security deposit from renters and verifies every ID before approval. You're covered if anything goes wrong.
                     </div>
@@ -330,11 +330,36 @@
         setupDropdown('condition-btn', 'condition-menu', 'condition', 'condition-text', 'condition-option');
         setupDropdown('duration-btn', 'duration-menu', 'min_rental_duration', 'duration-text', 'duration-option');
 
+        // 100% FIXED: 3 to 5 Images Validation Logic
+        function handleFileSelect(input) {
+            const display = document.getElementById('file-name-display');
+            const files = input.files;
+
+            if (files.length < 3 || files.length > 5) {
+                display.innerText = `⚠️ You selected ${files.length} photos. Please select exactly 3 to 5 photos.`;
+                display.style.color = '#ef4444';
+                input.value = '';
+            } else {
+                display.innerText = `${files.length} photos selected.`;
+                display.style.color = 'var(--orange-primary)';
+            }
+        }
+
         // Form Submission
         document.getElementById('add-gear-form').addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const msgBox = document.getElementById('message-box');
+            const imageInput = document.getElementById('images');
+
+            // Hard stop if they bypassed UI check
+            if (imageInput.files.length < 3 || imageInput.files.length > 5) {
+                msgBox.classList.remove('hidden');
+                msgBox.className = 'msg-box msg-error';
+                msgBox.innerText = 'You must upload exactly 3 to 5 photos to list an item.';
+                return;
+            }
+
             msgBox.classList.remove('hidden');
             msgBox.className = 'msg-box';
             msgBox.style.background = 'var(--glass-border)';
@@ -360,7 +385,11 @@
             formData.append('pickup_location', document.getElementById('pickup_location').value);
             formData.append('cancellation_policy', policyOption);
 
-            formData.append('image', document.getElementById('image').files[0]);
+            // 100% FIXED: Correct appending for cover and gallery
+            formData.append('image', imageInput.files[0]);
+            for (let i = 1; i < imageInput.files.length; i++) {
+                formData.append('extra_images', imageInput.files[i]);
+            }
 
             try {
                 const response = await fetch('/api/users/gear/add/', { method: 'POST', body: formData });
