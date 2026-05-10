@@ -4,20 +4,21 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import UserRegistrationSerializer
 from django.contrib.auth import authenticate
-# THE FIX: Added RentalRequest to the imports
-from .models import CustomUser, RoleSwitchRequest, GearItem, GearGallery, RentalRequest
+from .models import CustomUser, RoleSwitchRequest, GearItem, GearGallery, RentalRequest, ChatMessage
 from django.utils import timezone
 from datetime import timedelta
 from .serializers import GearItemSerializer
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
-from django.views import View
-from django.http import HttpResponse
-from django.shortcuts import render
-from django.views import View
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib.units import inch
+from django.utils.timezone import localtime
+
+# Real-time WebSocket imports
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
+# Price math and complex queries
+from decimal import Decimal, InvalidOperation
+from django.db.models import Q
 
 
 class RegisterView(APIView):
@@ -190,6 +191,9 @@ class AddGearAPIView(APIView):
             owner_id = request.data.get('owner_id')
             owner = CustomUser.objects.get(id=owner_id)
 
+            is_negotiable_str = str(request.data.get('is_negotiable', 'true')).lower()
+            is_negotiable = True if is_negotiable_str == 'true' else False
+
             new_item = GearItem.objects.create(
                 owner=owner,
                 title=request.data.get('title'),
@@ -203,7 +207,8 @@ class AddGearAPIView(APIView):
                 available_days=request.data.get('available_days', 'S,M,T,W,Th,F,Sa'),
                 delivery_option=request.data.get('delivery_option', 'Pickup only'),
                 pickup_location=request.data.get('pickup_location', ''),
-                cancellation_policy=request.data.get('cancellation_policy', 'flexible')
+                cancellation_policy=request.data.get('cancellation_policy', 'flexible'),
+                is_negotiable=is_negotiable
             )
 
             if 'image' in request.FILES:
@@ -247,11 +252,17 @@ class GearDetailAPIView(APIView):
         item.condition = request.data.get('condition', item.condition)
         item.category = request.data.get('category', getattr(item, 'category', 'Other'))
         item.replacement_value = request.data.get('replacement_value', getattr(item, 'replacement_value', 0.00)) or 0.00
-        item.min_rental_duration = request.data.get('min_rental_duration', getattr(item, 'min_rental_duration', '1 day'))
+        item.min_rental_duration = request.data.get('min_rental_duration',
+                                                    getattr(item, 'min_rental_duration', '1 day'))
         item.available_days = request.data.get('available_days', getattr(item, 'available_days', 'S,M,T,W,Th,F,Sa'))
         item.delivery_option = request.data.get('delivery_option', getattr(item, 'delivery_option', 'Pickup only'))
         item.pickup_location = request.data.get('pickup_location', getattr(item, 'pickup_location', ''))
-        item.cancellation_policy = request.data.get('cancellation_policy', getattr(item, 'cancellation_policy', 'flexible'))
+        item.cancellation_policy = request.data.get('cancellation_policy',
+                                                    getattr(item, 'cancellation_policy', 'flexible'))
+
+        if 'is_negotiable' in request.data:
+            is_negotiable_str = str(request.data.get('is_negotiable')).lower()
+            item.is_negotiable = True if is_negotiable_str == 'true' else False
 
         if 'image' in request.FILES:
             item.image = request.FILES['image']
@@ -298,7 +309,8 @@ def get_single_gear_api(request, item_id):
             'available_days': getattr(item, 'available_days', 'S,M,T,W,Th,F,Sa'),
             'delivery_option': getattr(item, 'delivery_option', 'Pickup only'),
             'pickup_location': getattr(item, 'pickup_location', ''),
-            'cancellation_policy': getattr(item, 'cancellation_policy', 'flexible')
+            'cancellation_policy': getattr(item, 'cancellation_policy', 'flexible'),
+            'is_negotiable': getattr(item, 'is_negotiable', True)
         }
         return JsonResponse(data)
     except GearItem.DoesNotExist:
@@ -395,8 +407,6 @@ class CheckRoleStatusAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-# --- NEW: RENTAL REQUEST & CHAT VIEWS ---
-
 class SubmitRentalRequestAPIView(APIView):
     def post(self, request):
         gear_id = request.data.get('gear_id')
@@ -412,11 +422,10 @@ class SubmitRentalRequestAPIView(APIView):
             if gear.owner.id == renter.id:
                 return Response({"error": "You cannot rent your own equipment!"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Prevent double-booking spam
             if RentalRequest.objects.filter(gear=gear, renter=renter, status='Pending').exists():
-                return Response({"error": "You already have a pending request for this item."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "You already have a pending request for this item."},
+                                status=status.HTTP_400_BAD_REQUEST)
 
-            # Create the actual rental record!
             rental_req = RentalRequest.objects.create(
                 gear=gear,
                 renter=renter,
@@ -434,82 +443,144 @@ class SubmitRentalRequestAPIView(APIView):
 
 
 def rental_chat_page(request, request_id):
-    # This serves the HTML template. We pass the request context so the page knows what item they are talking about.
     rental_request = get_object_or_404(RentalRequest, id=request_id)
     return render(request, 'rental_chat_placeholder.html', {'rental_request': rental_request})
 
 
-# --- 1. HTML Page View ---
-class ContractPageView(View):
-    def get(self, request):
-        context = {
-            "owner_name": "Rahim Rahman",
-            "renter_name": "Karim Khan",
-            "gear_name": "Canon EOS R5 Camera",
-            "gear_condition": "Excellent",
-            "rental_duration": "10 May to 15 May 2026",
-            "total_price": "7,500",
-            "penalty_fee": "10,000 BDT",
-        }
-        return render(request, 'rental_contract.html', context)
+class ChatHistoryAPIView(APIView):
+    def get(self, request, request_id):
+        messages = ChatMessage.objects.filter(rental_request_id=request_id).order_by('created_at')
+
+        # Mark all messages NOT sent by this user as read when they open the chat
+        viewer_id = request.query_params.get('user_id')
+        if viewer_id:
+            ChatMessage.objects.filter(
+                rental_request_id=request_id,
+                is_read=False
+            ).exclude(sender_id=viewer_id).update(is_read=True)
+
+        data = []
+        for msg in messages:
+            data.append({
+                'id': msg.id,
+                'text': msg.text,
+                'sender_id': msg.sender.id,
+                'is_system_update': msg.is_system_update,
+                'timestamp': localtime(msg.created_at).strftime("%I:%M %p")
+            })
+
+        return Response(data, status=status.HTTP_200_OK)
 
 
-# --- 2. PDF Download View ---
-class GenerateContractPDFView(View):
-    def get(self, request, *args, **kwargs):
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="GearShare_Rental_Contract.pdf"'
+class UpdateChatPriceAPIView(APIView):
+    def post(self, request, request_id):
+        rental_req = get_object_or_404(RentalRequest, id=request_id)
+        new_price_str = request.data.get('new_price')
+        user_id = request.data.get('user_id')
 
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
+        if not new_price_str or not user_id:
+            return Response({"error": "Missing data format"}, status=status.HTTP_400_BAD_REQUEST)
 
-        owner_name = "Rahim Rahman (Owner)"
-        renter_name = "Karim Khan (Renter)"
-        gear_name = "Sony Alpha A7III Camera & Lens"
-        rental_duration = "3 Days (May 10, 2026 to May 13, 2026)"
-        penalty_fee = "5,000 BDT"
+        try:
+            new_price = Decimal(str(new_price_str))
+        except InvalidOperation:
+            return Response({"error": "Invalid price format."}, status=status.HTTP_400_BAD_REQUEST)
 
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1 * inch, height - 1 * inch, "GearShare Rental Agreement")
+        if str(rental_req.owner.id) != str(user_id):
+            return Response({"error": "Unauthorized. Only the owner can update the price."}, status=status.HTTP_403_FORBIDDEN)
 
-        p.setFont("Helvetica-Bold", 12)
-        p.drawString(1 * inch, height - 1.5 * inch, "1. Parties Involved:")
-        p.setFont("Helvetica", 12)
-        p.drawString(1.2 * inch, height - 1.8 * inch, f"Owner: {owner_name}")
-        p.drawString(1.2 * inch, height - 2.1 * inch, f"Renter: {renter_name}")
+        gear = rental_req.gear
+        original_price = gear.price_per_day
 
-        p.setFont("Helvetica-Bold", 12)
-        p.drawString(1 * inch, height - 2.6 * inch, "2. Equipment Details & Duration:")
-        p.setFont("Helvetica", 12)
-        p.drawString(1.2 * inch, height - 2.9 * inch, f"Gear: {gear_name}")
-        p.drawString(1.2 * inch, height - 3.2 * inch, f"Rental Period: {rental_duration}")
+        if new_price >= original_price:
+            return Response({
+                "error": f"You can only offer a discount. The original price is ৳{original_price:.2f}."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        p.setFont("Helvetica-Bold", 12)
-        p.drawString(1 * inch, height - 3.7 * inch, "3. Terms & Penalty:")
+        min_allowed_price = original_price * Decimal('0.60')
+        if new_price < min_allowed_price:
+            return Response({
+                "error": f"You cannot deduct more than 40%. The minimum allowed price is ৳{min_allowed_price:.2f}."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        textobject = p.beginText(1 * inch, height - 4.1 * inch)
-        textobject.setFont("Helvetica", 11)
+        rental_req.negotiated_price = new_price
+        rental_req.save()
 
-        rules_lines = [
-            "The Renter agrees to return the equipment in the exact condition it was received.",
-            "If the Renter damages, loses, or fails to return the equipment within the agreed",
-            f"time limits, a penalty of {penalty_fee} and/or the full replacement cost of the gear",
-            "will be charged.",
-            "",
-            "Any breach of this agreement may result in permanent suspension from GearShare,",
-            "and legal action may be taken against the Renter under the applicable laws."
-        ]
+        system_text = f"System Update: The owner has offered a discounted rate of ৳{new_price:.2f} / {gear.price_period}."
+        msg = ChatMessage.objects.create(
+            rental_request=rental_req,
+            sender=rental_req.owner,
+            text=system_text,
+            is_system_update=True
+        )
 
-        for line in rules_lines:
-            textobject.textLine(line)
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'chat_{request_id}',
+            {
+                'type': 'chat_message',
+                'message': system_text,
+                'sender_id': rental_req.owner.id,
+                'is_system_update': True,
+                'new_price': str(new_price),
+                'timestamp': localtime(msg.created_at).strftime("%I:%M %p")
+            }
+        )
 
-        p.drawText(textobject)
+        return Response({"message": "Discount offered successfully!"}, status=status.HTTP_200_OK)
 
-        p.drawString(1 * inch, 2 * inch, "_______________________")
-        p.drawString(1 * inch, 1.8 * inch, "Signature of Owner")
-        p.drawString(4.5 * inch, 2 * inch, "_______________________")
-        p.drawString(4.5 * inch, 1.8 * inch, "Signature of Renter")
 
-        p.showPage()
-        p.save()
-        return response
+# --- Facebook Messenger Style Chat List API ---
+class UserChatListAPIView(APIView):
+    def get(self, request, user_id):
+        user = get_object_or_404(CustomUser, id=user_id)
+
+        # Get all rental requests where the user is EITHER the owner OR the renter
+        requests = RentalRequest.objects.filter(Q(owner=user) | Q(renter=user))
+
+        chat_list = []
+        for req in requests:
+            latest_msg = req.messages.order_by('-created_at').first()
+
+            if req.owner == user:
+                other_user = req.renter
+                role_context = "Renter"
+            else:
+                other_user = req.owner
+                role_context = "Owner"
+
+            try:
+                pfp = other_user.profile_picture.url if other_user.profile_picture else None
+            except ValueError:
+                pfp = None
+
+            snippet = latest_msg.text if latest_msg else "No messages yet"
+            if len(snippet) > 35:
+                snippet = snippet[:32] + "..."
+
+            # Check if there are any unread messages from the OTHER person in this room
+            has_unread = ChatMessage.objects.filter(
+                rental_request=req,
+                is_read=False
+            ).exclude(sender=user).exists()
+
+            chat_list.append({
+                'request_id': req.id,
+                'gear_title': req.gear.title,
+                'other_user_name': other_user.username,
+                'other_user_pfp': pfp,
+                'role_context': role_context,
+                'latest_message': snippet,
+                'is_system': latest_msg.is_system_update if latest_msg else False,
+                'has_unread': has_unread,  # <-- Messenger-style unread flag
+                'timestamp': localtime(latest_msg.created_at).strftime("%I:%M %p") if latest_msg else localtime(req.created_at).strftime("%I:%M %p"),
+                'sort_time': latest_msg.created_at if latest_msg else req.created_at
+            })
+
+        # Sort so most recently active chats are at top
+        chat_list.sort(key=lambda x: x['sort_time'], reverse=True)
+
+        for item in chat_list:
+            del item['sort_time']
+
+        return Response(chat_list, status=status.HTTP_200_OK)

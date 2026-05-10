@@ -4,7 +4,8 @@ from .views import (RegisterView, LoginView, PendingKYCView, ApproveKYCView,
                     GearDetailAPIView, get_single_gear_api, SubmitRoleSwitchAPIView,
                     PendingRoleSwitchAPIView, ApproveRoleSwitchAPIView,
                     DeclineRoleSwitchAPIView, ToggleRoleAPIView,
-                    SubmitRentalRequestAPIView, GenerateContractPDFView, ContractPageView)  # Removed rental_chat_page import from here
+                    SubmitRentalRequestAPIView, ChatHistoryAPIView,
+                    UpdateChatPriceAPIView, UserChatListAPIView)
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -16,7 +17,7 @@ urlpatterns = [
     path('kyc-decline/<int:user_id>/', DeclineKYCView.as_view(), name='kyc_decline'),
     path('kyc-resubmit/<int:user_id>/', ResubmitKYCView.as_view(), name='kyc_resubmit'),
 
-    # Gear API (Prefix 'api/users/' added by gearshare_core/urls.py)
+    # Gear API
     path('gear/', GearListView.as_view(), name='gear_list'),
     path('gear/add/', AddGearAPIView.as_view(), name='api_add_gear'),
     path('gear/update/<int:item_id>/', GearDetailAPIView.as_view(), name='api_gear_detail'),
@@ -29,8 +30,11 @@ urlpatterns = [
     path('role-switch/decline/<int:request_id>/', DeclineRoleSwitchAPIView.as_view(), name='role_switch_decline'),
     path('role-switch/toggle/<int:user_id>/', ToggleRoleAPIView.as_view(), name='role_switch_toggle'),
 
-    # Submit Request API
+    # Rental Requests & Real-Time Chat
     path('rental/request/', SubmitRentalRequestAPIView.as_view(), name='api_submit_rental_request'),
-    path('generate-contract/', GenerateContractPDFView.as_view(), name='generate_contract'),
-    path('view-contract/', ContractPageView.as_view(), name='view_contract'),
+    path('rental/<int:request_id>/messages/', ChatHistoryAPIView.as_view(), name='api_chat_history'),
+    path('rental/<int:request_id>/update-price/', UpdateChatPriceAPIView.as_view(), name='api_update_chat_price'),
+
+    # Global Chat List (has_unread baked in — no separate endpoint needed)
+    path('chats/<int:user_id>/', UserChatListAPIView.as_view(), name='api_user_chat_list'),
 ]

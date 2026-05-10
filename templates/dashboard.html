@@ -32,6 +32,42 @@
             .search-input:focus { width: 100%; position: absolute; right: 0; top: -5px; z-index: 60; background: var(--glass-bg); backdrop-filter: blur(20px); }
         }
 
+        /* Chat Dropdown — solid background, no bleed-through */
+        .chat-dropdown-container { position: relative; display: flex; align-items: center; }
+        .chat-dropdown-menu {
+            position: absolute; top: 120%; right: -50px; width: 360px;
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.1); border-radius: 1rem;
+            box-shadow: 0 25px 60px -10px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.05); z-index: 100;
+            overflow: hidden; display: flex; flex-direction: column;
+            max-height: 450px; transform-origin: top right;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); opacity: 1; transform: scale(1);
+        }
+        /* Dark mode — fully opaque dark panel */
+        html.dark .chat-dropdown-menu {
+            background: #18181b;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 25px 60px -10px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05);
+        }
+
+        .chat-dropdown-menu.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; display: none; }
+        .chat-dropdown-header { padding: 1.25rem 1.5rem; font-weight: 900; font-size: 1.5rem; border-bottom: 1px solid var(--glass-border); color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
+        .chat-dropdown-list { overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; }
+        .chat-dropdown-list::-webkit-scrollbar { width: 6px; }
+        .chat-dropdown-list::-webkit-scrollbar-track { background: transparent; }
+        .chat-dropdown-list::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 10px; }
+        .chat-item { display: flex; align-items: center; padding: 1rem 1.5rem; gap: 1rem; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(128,128,128,0.1); text-decoration: none; color: inherit; }
+        .chat-item:last-child { border-bottom: none; }
+        .chat-item:hover { background: rgba(249,115,22,0.1); }
+        .chat-item-pfp { width: 3.5rem; height: 3.5rem; border-radius: 50%; object-fit: cover; background: rgba(0,0,0,0.1); flex-shrink: 0; border: 2px solid transparent; transition: border-color 0.2s; }
+        html.dark .chat-item-pfp { background: rgba(255,255,255,0.1); }
+        .chat-item:hover .chat-item-pfp { border-color: var(--orange-primary); }
+        .chat-item-info { flex-grow: 1; overflow: hidden; }
+        .chat-item-name { font-weight: bold; font-size: 1rem; color: var(--text-main); margin: 0 0 0.1rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-item-gear { font-size: 0.7rem; color: var(--orange-primary); font-weight: 800; text-transform: uppercase; margin: 0 0 0.3rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.05em; }
+        .chat-item-msg { font-size: 0.875rem; color: var(--text-muted); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-item-time { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; padding-left: 0.5rem; font-weight: bold; }
+
         .role-badge-container { display: none; align-items: center; padding: 0.25rem 0.75rem; border-radius: 9999px; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); border: none; outline: none; font-family: inherit; transition: all 0.2s ease; }
         @media (min-width: 640px) { .role-badge-container { display: flex; } }
         button.role-badge-container.interactive:hover { background: rgba(249,115,22,0.2); transform: scale(1.05); cursor: pointer; }
@@ -140,10 +176,9 @@
         </div>
     </div>
 
-    <!-- Notification Modal for Approve/Reject Msgs -->
     <div id="notification-modal" class="modal-overlay hidden">
         <div class="glass-panel modal-content border border-gray-200 dark:border-white/10">
-            <div id="notif-icon" class="modal-icon"></div> <!-- Icon injected via JS -->
+            <div id="notif-icon" class="modal-icon"></div>
             <h2 id="notif-title" class="heading" style="font-size: 1.875rem; font-weight: 800; margin: 0 0 0.5rem 0;">Update</h2>
             <p id="notif-message" style="color: var(--text-muted); margin: 0 0 2rem 0;"></p>
             <button onclick="document.getElementById('notification-modal').classList.add('hidden')" class="btn-orange w-full" style="padding: 1rem;">Okay, understood</button>
@@ -188,7 +223,6 @@
             </a>
 
             <div class="nav-actions">
-                <!-- Navbar Search Bar -->
                 <div class="search-container" id="search-wrapper">
                     <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -199,6 +233,26 @@
                 <a href="/" style="font-size: 0.875rem; font-weight: bold; color: var(--text-main); text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); transition: 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
                     Browse Gear
                 </a>
+
+                <div class="chat-dropdown-container" id="chat-dropdown-wrapper">
+                    <button id="chat-dropdown-btn" class="theme-btn" style="position: relative; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;" title="Messages"
+                        onmouseover="this.style.background='rgba(249,115,22,0.2)'; this.style.borderColor='rgba(249,115,22,0.5)'; this.style.boxShadow='0 0 12px rgba(249,115,22,0.25)'"
+                        onmouseout="this.style.background='rgba(249,115,22,0.1)'; this.style.borderColor='rgba(249,115,22,0.2)'; this.style.boxShadow='none'">
+                        <svg style="width: 1.1rem; height: 1.1rem; color: var(--orange-primary);" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+                        </svg>
+                        <!-- Unread red dot badge -->
+                        <span id="chat-unread-dot" style="display: none; position: absolute; top: 4px; right: 4px; width: 9px; height: 9px; background: #ef4444; border-radius: 50%; border: 2px solid var(--bg-main, #0f0f10); box-shadow: 0 0 6px rgba(239,68,68,0.7); animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite;"></span>
+                    </button>
+                    <div id="chat-dropdown-menu" class="chat-dropdown-menu hidden">
+                        <div class="chat-dropdown-header">
+                            Chats
+                            <svg style="width: 1.25rem; height: 1.25rem; color: var(--orange-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                        </div>
+                        <div id="chat-dropdown-list" class="chat-dropdown-list">
+                            </div>
+                    </div>
+                </div>
 
                 <button id="role-badge-btn" class="role-badge-container" title="Current Role">
                     <svg id="swap-icon" class="swap-icon" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -271,7 +325,6 @@
             </div>
         </div>
 
-        <!-- NEW: Renter Call to Action Panel -->
         <div id="renter-cta-panel" class="glass-panel hidden" style="text-align: center; padding: 4rem 2rem; margin-top: 2rem;">
             <div class="modal-icon" style="background: rgba(249,115,22,0.1); color: var(--orange-primary); margin: 0 auto 1.5rem auto;">
                 <svg style="width: 2.5rem; height: 2.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -294,13 +347,11 @@
             <button onclick="window.location.href='/add-gear/'" class="btn-orange" style="border-radius: 0.75rem;">+ Add Equipment</button>
         </div>
 
-        <!-- Inventory Header -->
         <div id="gear-header" class="hidden" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; margin-top: 3rem;">
             <h2 class="heading" style="font-size: 1.875rem; margin: 0;">My <span style="color: var(--orange-primary);">Inventory</span></h2>
             <button onclick="window.location.href='/add-gear/'" class="btn-orange" style="padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem;">+ Add More</button>
         </div>
 
-        <!-- Main Grid for Gear -->
         <div id="gear-container" class="stat-grid hidden"></div>
 
         <div id="rejected-panel" class="glass-panel panel-rejected hidden">
@@ -355,7 +406,6 @@
     </main>
 
     <script>
-        // Set a global variable to hold loaded gear items for instant searching
         let loadedGearItems = [];
 
         // 1. Theme Toggle Logic
@@ -401,6 +451,109 @@
             document.getElementById('nav-profile-pic').src = storedPicUrl;
             document.getElementById('header-profile-pic').src = storedPicUrl;
         }
+
+        // --- THE FIX: Hide Chat Icon ONLY if Admin ---
+        if (storedRole === 'admin') {
+            const chatWrapper = document.getElementById('chat-dropdown-wrapper');
+            if(chatWrapper) chatWrapper.style.display = 'none';
+        }
+
+        const chatDropdownBtn = document.getElementById('chat-dropdown-btn');
+        const chatDropdownMenu = document.getElementById('chat-dropdown-menu');
+        const chatDropdownList = document.getElementById('chat-dropdown-list');
+
+        chatDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            chatDropdownMenu.classList.toggle('hidden');
+            if(!chatDropdownMenu.classList.contains('hidden')) {
+                fetchGlobalChats();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if(!chatDropdownMenu.contains(e.target) && !chatDropdownBtn.contains(e.target)) {
+                chatDropdownMenu.classList.add('hidden');
+            }
+        });
+
+        async function fetchGlobalChats() {
+            if(!storedUserId) return;
+            chatDropdownList.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-muted); font-weight: bold;">Loading chats...</div>';
+            try {
+                const response = await fetch(`/api/users/chats/${storedUserId}/`);
+                const chats = await response.json();
+
+                if(chats.length === 0) {
+                    chatDropdownList.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-muted); font-weight: bold;">No active negotiations.</div>';
+                    return;
+                }
+
+                chatDropdownList.innerHTML = '';
+                chats.forEach(chat => {
+                    const fallbackImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239CA3AF'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E";
+                    const pfp = chat.other_user_pfp || fallbackImg;
+                    const msgPrefix = chat.is_system ? `<span style="color: var(--orange-primary); font-weight: bold;">System Alert: </span>` : '';
+                    const unread = chat.has_unread;
+
+                    // Messenger-style: bold name + white/bright message + orange dot if unread
+                    const nameStyle = unread ? 'font-weight: 900; color: var(--text-main);' : '';
+                    const msgStyle = unread
+                        ? 'color: var(--text-main); font-weight: 600;'
+                        : 'color: var(--text-muted); font-weight: normal;';
+                    const timeStyle = unread ? 'color: var(--orange-primary); font-weight: 900;' : '';
+                    const unreadDot = unread
+                        ? `<span style="width: 10px; height: 10px; border-radius: 50%; background: var(--orange-primary); flex-shrink: 0; box-shadow: 0 0 6px rgba(249,115,22,0.6);"></span>`
+                        : '';
+                    const rowBg = unread ? 'background: rgba(249,115,22,0.06);' : '';
+
+                    chatDropdownList.innerHTML += `
+                        <a href="/rentals/${chat.request_id}/chat/" class="chat-item" style="${rowBg}">
+                            <div style="position: relative; flex-shrink: 0;">
+                                <img src="${pfp}" class="chat-item-pfp" alt="Profile">
+                            </div>
+                            <div class="chat-item-info">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem;">
+                                    <p class="chat-item-name" style="${nameStyle}">${chat.other_user_name}</p>
+                                    <span class="chat-item-time" style="${timeStyle}">${chat.timestamp}</span>
+                                </div>
+                                <p class="chat-item-gear">${chat.role_context}: ${chat.gear_title}</p>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: space-between;">
+                                    <p class="chat-item-msg" style="${msgStyle}">${msgPrefix}${chat.latest_message}</p>
+                                    ${unreadDot}
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                });
+            } catch (err) {
+                chatDropdownList.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--danger-text); font-weight: bold;">Error loading chats.</div>';
+            }
+        }
+
+        // --- RED DOT: driven by fetchGlobalChats result, no separate polling endpoint needed ---
+        const chatUnreadDot = document.getElementById('chat-unread-dot');
+
+        async function pollUnreadCount() {
+            if (!storedUserId || storedRole === 'admin') return;
+            try {
+                const res = await fetch(`/api/users/chats/${storedUserId}/`);
+                if (!res.ok) return;
+                const chats = await res.json();
+                const anyUnread = chats.some(c => c.has_unread);
+                chatUnreadDot.style.display = anyUnread ? 'block' : 'none';
+            } catch (e) {
+                // silently fail
+            }
+        }
+
+        // Hide dot when user opens the chat dropdown (they're viewing now)
+        chatDropdownBtn.addEventListener('click', () => {
+            chatUnreadDot.style.display = 'none';
+        });
+
+        // Poll immediately on load, then every 15 seconds
+        pollUnreadCount();
+        setInterval(pollUnreadCount, 15000);
 
         // --- ROLE SWITCHER CLICKABLE BADGE LOGIC ---
         const roleBadgeBtn = document.getElementById('role-badge-btn');
@@ -598,17 +751,13 @@
             const gearHeader = document.getElementById('gear-header');
             const gearContainer = document.getElementById('gear-container');
             const storedUsername = localStorage.getItem('gearshare_username');
-
-            // 1. Grab the user ID
             const currentUserId = localStorage.getItem('gearshare_user_id');
 
             try {
-                // 2. Pass the user ID to the backend so it knows your trust score!
                 const fetchUrl = currentUserId ? `/api/users/gear/?user_id=${currentUserId}` : '/api/users/gear/';
                 const response = await fetch(fetchUrl);
                 const allItems = await response.json();
 
-                // Save to global array so search can filter it later
                 loadedGearItems = allItems.filter(item => item.owner_username === storedUsername);
 
                 if (loadedGearItems.length === 0) {
@@ -626,7 +775,6 @@
             } catch (err) { console.error("Error fetching gear:", err); }
         }
 
-        // Separate render function to allow the search bar to redraw the grid
         function renderGearCards(items) {
             const gearContainer = document.getElementById('gear-container');
             gearContainer.innerHTML = '';
@@ -639,7 +787,6 @@
             items.forEach(item => {
                 const imageUrl = item.image ? item.image : 'https://via.placeholder.com/400x200?text=No+Image';
 
-                // THE FIX: Changed background and color variables on the Edit button for perfect Light/Dark mode support!
                 const actionButtons = `
                     <div style="display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--glass-border);">
                         <button onclick="window.location.href='/edit-gear/${item.id}/'" style="flex: 1; padding: 0.5rem; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 0.5rem; color: var(--text-main); cursor: pointer; font-weight: bold; transition: 0.2s;">Edit</button>
@@ -681,7 +828,6 @@
                 const gearContainer = document.getElementById('gear-container');
 
                 if (storedRole === 'owner') {
-                    // Hide the empty graphic and show the gear grid area to display search results
                     standardPanel.classList.add('hidden');
                     gearHeader.classList.remove('hidden');
                     gearHeader.style.display = 'flex';
@@ -695,7 +841,6 @@
 
                     renderGearCards(filteredItems);
 
-                    // If they clear the search and their inventory was originally empty, bring the empty graphic back
                     if (term.trim() === '' && loadedGearItems.length === 0) {
                         standardPanel.classList.remove('hidden');
                         gearHeader.classList.add('hidden');
