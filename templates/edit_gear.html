@@ -25,7 +25,6 @@
         .gs-title span { color: var(--orange-primary); }
         .gs-subtitle { font-size: 14px; color: var(--text-muted); margin: 0 0 1.5rem; }
 
-        /* THE FIX: Notice box explaining the locked fields */
         .gs-notice { background: rgba(249,115,22,0.05); border: 1px solid rgba(249,115,22,0.2); border-left: 4px solid var(--orange-primary); border-radius: 0.75rem; padding: 1rem 1.25rem; font-size: 13px; color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6; }
         .gs-notice strong { color: var(--text-main); font-weight: bold; }
 
@@ -36,7 +35,6 @@
         .gs-row-3 { grid-template-columns: 1fr 1fr 1fr; }
         .gs-row-2 { grid-template-columns: 1fr 1fr; }
 
-        /* THE FIX: Added styles for locked fields */
         .lock-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-muted); background: rgba(0,0,0,0.1); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2px 8px; margin-left: 6px; vertical-align: middle; text-transform: lowercase; }
         html.dark .lock-badge { background: rgba(255,255,255,0.05); }
 
@@ -50,7 +48,6 @@
         }
         input:focus, textarea:focus { border-color: var(--orange-primary); outline: none; }
 
-        /* THE FIX: Lock the description box resizing */
         textarea { resize: none; min-height: 100px; height: auto; }
 
         input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -72,7 +69,6 @@
         .dropdown-item:last-child { border-bottom: none; }
         .dropdown-item:hover { background: rgba(249,115,22,0.1); color: var(--orange-primary); font-weight: bold; }
 
-        /* THE FIX: CSS for locked inputs and dropdown buttons */
         input:disabled, .dropdown-btn.disabled {
             background: rgba(0,0,0,0.05);
             color: var(--text-muted);
@@ -125,16 +121,14 @@
             <h1 class="gs-title">Update<br><span>Equipment</span></h1>
             <p class="gs-subtitle">Modify your gear details below.</p>
 
-            <!-- THE FIX: The Notice Banner -->
             <div class="gs-notice">
-                <strong>Why are some fields locked?</strong> Renters book based on the Title, Category, Rate, and Photos. Changing these mid-booking would be unfair and violate the network terms. You can freely update availability and policies.
+                <strong>Why are some fields locked?</strong> Renters book based on the Title, Category, Rate, and Photos. Changing these mid-booking would be unfair and violate the network terms. You can freely update availability, condition, and pricing rules.
             </div>
 
             <div id="message-box" class="msg-box hidden"></div>
 
             <form id="edit-gear-form">
 
-                <!-- THE FIX: Disabled inputs with the Lock Badge -->
                 <div class="gs-field">
                     <label class="gs-label">Equipment title <span class="lock-badge"><svg style="width: 10px; height: 10px; display: inline;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> locked</span></label>
                     <input type="text" id="title" placeholder="e.g., Sony A7III Body" disabled />
@@ -144,12 +138,10 @@
                     <label class="gs-label">Category <span class="lock-badge"><svg style="width: 10px; height: 10px; display: inline;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> locked</span></label>
                     <div class="dropdown-container">
                         <input type="hidden" id="category" value="Camera Body">
-                        <!-- THE FIX: Added .disabled class to button -->
                         <button type="button" id="category-btn" class="dropdown-btn disabled" style="pointer-events: none;">
                             <span id="category-text">Camera Body</span>
                             <svg style="width: 1rem; height: 1rem; color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
-                        <!-- Menu removed since it can't be opened -->
                     </div>
                 </div>
 
@@ -158,7 +150,7 @@
                     <textarea id="description" placeholder="Include accessories, known wear & tear, usage rules..." required></textarea>
                 </div>
 
-                <div class="gs-row gs-row-3">
+                <div class="gs-row gs-row-2">
                     <div>
                         <label class="gs-label">Rate (৳) <span class="lock-badge"><svg style="width: 10px; height: 10px; display: inline;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></span></label>
                         <input type="number" id="price" placeholder="2500" disabled />
@@ -167,11 +159,27 @@
                         <label class="gs-label">Per <span class="lock-badge"><svg style="width: 10px; height: 10px; display: inline;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg></span></label>
                         <div class="dropdown-container">
                             <input type="hidden" id="period" value="Day">
-                            <!-- THE FIX: Added .disabled class to button -->
                             <button type="button" id="period-btn" class="dropdown-btn disabled" style="pointer-events: none;">
                                 <span id="period-text">Day</span>
                                 <svg style="width: 1rem; height: 1rem; color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gs-row gs-row-2">
+                    <div>
+                        <label class="gs-label">Pricing Type</label>
+                        <div class="dropdown-container">
+                            <input type="hidden" id="is_negotiable" value="true">
+                            <button type="button" id="negotiable-btn" class="dropdown-btn">
+                                <span id="negotiable-text">Negotiable</span>
+                                <svg style="width: 1rem; height: 1rem; color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <ul id="negotiable-menu" class="dropdown-menu">
+                                <li data-value="true" class="dropdown-item negotiable-option">Negotiable</li>
+                                <li data-value="false" class="dropdown-item negotiable-option">Fixed Price</li>
+                            </ul>
                         </div>
                     </div>
                     <div>
@@ -258,7 +266,6 @@
 
                 <div class="gs-section">Photos</div>
 
-                <!-- THE FIX: Locked photo section logic with disabled styling -->
                 <div class="gs-upload disabled" style="cursor: not-allowed; opacity: 0.5; background: rgba(0,0,0,0.05); border-color: var(--glass-border);" onclick="alert('Photos cannot be altered after listing to protect renters from bait-and-switch scams. If you need to update the images, please delete this item and create a new listing.');">
                     <svg style="width: 2.5rem; height: 2.5rem; color: var(--text-muted); margin: 0 auto 0.5rem auto;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     <div style="font-size:14px; font-weight:bold; color:var(--text-main); margin-bottom:4px;">Gear photos <span class="lock-badge"><svg style="width: 10px; height: 10px; display: inline;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> locked</span></div>
@@ -307,7 +314,6 @@
 
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                // Close others
                 document.querySelectorAll('.dropdown-menu').forEach(m => {
                     if (m !== menu) m.classList.remove('show');
                 });
@@ -332,6 +338,8 @@
         // Initialize only the unlocked dropdowns
         setupDropdown('condition-btn', 'condition-menu', 'condition', 'condition-text', 'condition-option');
         setupDropdown('duration-btn', 'duration-menu', 'min_rental_duration', 'duration-text', 'duration-option');
+        // THE FIX: Set up the editable dropdown for negotiable
+        setupDropdown('negotiable-btn', 'negotiable-menu', 'is_negotiable', 'negotiable-text', 'negotiable-option');
 
         // --- Auto-fill Data ---
         window.addEventListener('DOMContentLoaded', async () => {
@@ -345,13 +353,17 @@
                     document.getElementById('replacement_value').value = data.replacement_value || '';
                     document.getElementById('pickup_location').value = data.pickup_location || '';
 
-                    // Auto-fill Dropdowns (even the locked ones need to display the correct text)
                     if(data.category) { document.getElementById('category').value = data.category; document.getElementById('category-text').innerText = data.category; }
                     if(data.price_period) { document.getElementById('period').value = data.price_period; document.getElementById('period-text').innerText = data.price_period; }
                     if(data.condition) { document.getElementById('condition').value = data.condition; document.getElementById('condition-text').innerText = data.condition; }
                     if(data.min_rental_duration) { document.getElementById('min_rental_duration').value = data.min_rental_duration; document.getElementById('duration-text').innerText = data.min_rental_duration; }
 
-                    // Auto-fill Days
+                    // THE FIX: Fetch and populate the current negotiable status so the owner sees what they picked!
+                    if(data.is_negotiable !== undefined) {
+                        document.getElementById('is_negotiable').value = data.is_negotiable ? 'true' : 'false';
+                        document.getElementById('negotiable-text').innerText = data.is_negotiable ? 'Negotiable' : 'Fixed Price';
+                    }
+
                     if(data.available_days) {
                         const daysArr = data.available_days.split(',');
                         document.querySelectorAll('#days .gs-day').forEach(d => {
@@ -360,7 +372,6 @@
                         });
                     }
 
-                    // Auto-fill Delivery
                     if(data.delivery_option) {
                         document.querySelectorAll('#delivery .gs-dtag').forEach(d => {
                             if(d.innerText === data.delivery_option) d.classList.add('on');
@@ -368,7 +379,6 @@
                         });
                     }
 
-                    // Auto-fill Policy
                     if(data.cancellation_policy) {
                         document.querySelectorAll('#policy .gs-policy-opt').forEach(p => {
                             if(p.getAttribute('data-p') === data.cancellation_policy) p.classList.add('selected');
@@ -400,8 +410,7 @@
             const formData = new FormData();
             formData.append('owner_id', userId);
 
-            // THE FIX: Do NOT append Title, Category, Price, Period, or Images.
-            // The backend shouldn't receive them anyway since they are disabled!
+            // Append unlocked fields
             formData.append('description', document.getElementById('description').value);
             formData.append('condition', document.getElementById('condition').value);
             formData.append('replacement_value', document.getElementById('replacement_value').value);
@@ -410,6 +419,9 @@
             formData.append('delivery_option', deliveryOption);
             formData.append('pickup_location', document.getElementById('pickup_location').value);
             formData.append('cancellation_policy', policyOption);
+
+            // THE FIX: Append the new Negotiable status to be updated in the database
+            formData.append('is_negotiable', document.getElementById('is_negotiable').value);
 
             try {
                 const response = await fetch(`/api/users/gear/update/${itemId}/`, {

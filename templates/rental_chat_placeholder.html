@@ -30,7 +30,7 @@
 
         .context-details { display: flex; flex-direction: column; gap: 0.5rem; }
         .context-title { font-size: 1.5rem; font-weight: 900; color: var(--text-main); margin: 0; line-height: 1.2; }
-        .context-price { font-size: 1.25rem; font-weight: bold; color: var(--orange-primary); }
+        .context-price { font-size: 1.25rem; font-weight: bold; color: var(--orange-primary); transition: color 0.3s; }
 
         .user-block { display: flex; align-items: center; gap: 1rem; padding-top: 1rem; border-top: 1px solid rgba(128,128,128,0.2); }
         .avatar-circle { width: 40px; height: 40px; border-radius: 50%; background: var(--orange-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; flex-shrink: 0; }
@@ -44,21 +44,28 @@
         .chat-header { padding: 1.5rem 2rem; border-bottom: 1px solid rgba(128,128,128,0.2); font-weight: bold; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); }
         html.dark .chat-header { background: rgba(255,255,255,0.02); }
 
-        .chat-messages { flex: 1; padding: 2rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+        /* Sleek custom scrollbar for the chat area */
+        .chat-messages { flex: 1; padding: 2rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; scrollbar-width: thin; scrollbar-color: rgba(128, 128, 128, 0.3) transparent; }
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-track { background: transparent; }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 10px; }
+        .chat-messages::-webkit-scrollbar-thumb:hover { background: rgba(249, 115, 22, 0.5); }
 
         .msg-wrapper { display: flex; width: 100%; }
         .msg-wrapper.sent { justify-content: flex-end; }
         .msg-wrapper.received { justify-content: flex-start; }
+        .msg-wrapper.system { justify-content: center; width: 100%; margin: 1rem 0; }
 
         .msg-bubble { max-width: 70%; padding: 1rem 1.25rem; border-radius: 1.25rem; font-size: 0.95rem; line-height: 1.5; position: relative; }
         .sent .msg-bubble { background: var(--orange-primary); color: white; border-bottom-right-radius: 0.25rem; box-shadow: 0 4px 15px -3px rgba(249,115,22,0.3); }
         .received .msg-bubble { background: rgba(0,0,0,0.05); color: var(--text-main); border: 1px solid var(--glass-border); border-bottom-left-radius: 0.25rem; }
         html.dark .received .msg-bubble { background: rgba(255,255,255,0.05); }
 
+        .system .msg-bubble { background: rgba(249,115,22,0.1); color: var(--orange-primary); border: 1px solid rgba(249,115,22,0.3); font-weight: bold; text-align: center; border-radius: 1rem; max-width: 90%; font-size: 0.85rem; }
+
         .msg-time { font-size: 0.7rem; color: rgba(255,255,255,0.7); margin-top: 0.25rem; text-align: right; }
         .received .msg-time { color: var(--text-muted); text-align: left; }
-
-        .system-msg { text-align: center; color: var(--text-muted); font-size: 0.8rem; font-weight: bold; margin: 1rem 0; text-transform: uppercase; letter-spacing: 0.05em; }
+        .system .msg-time { color: var(--orange-primary); opacity: 0.7; text-align: center; }
 
         .chat-input-area { padding: 1.5rem 2rem; border-top: 1px solid rgba(128,128,128,0.2); display: flex; gap: 1rem; background: rgba(0,0,0,0.02); }
         html.dark .chat-input-area { background: rgba(255,255,255,0.02); }
@@ -66,17 +73,12 @@
         .chat-input { flex: 1; padding: 1rem 1.5rem; border-radius: 9999px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-main); font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.2s; }
         .chat-input:focus { border-color: var(--orange-primary); }
 
+        input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+
         .send-btn { background: var(--orange-primary); color: white; border: none; width: 3.25rem; height: 3.25rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px -3px rgba(249,115,22,0.4); }
         .send-btn:hover { transform: scale(1.05); }
         .send-btn svg { width: 1.25rem; height: 1.25rem; transform: translateX(2px); }
-
-        /* Typing indicator animation */
-        .typing { display: none; gap: 4px; padding: 0.5rem 1rem; width: fit-content; background: rgba(0,0,0,0.05); border-radius: 1rem; border: 1px solid var(--glass-border); margin-bottom: 1rem; }
-        html.dark .typing { background: rgba(255,255,255,0.05); }
-        .typing span { width: 6px; height: 6px; background: var(--text-muted); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
-        .typing span:nth-child(1) { animation-delay: -0.32s; }
-        .typing span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -84,14 +86,13 @@
     <div class="glow-orb orb-2" style="width: 600px; height: 600px; bottom: 0; left: -100px;"></div>
 
     <div class="page-wrapper">
-        <button onclick="window.history.back()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; font-weight: bold; font-size: 1rem; transition: color 0.2s;">
+        <button onclick="window.location.href='/dashboard/'" style="background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; font-weight: bold; font-size: 1rem; transition: color 0.2s;">
             <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Item
+            Back to Dashboard
         </button>
 
         <div class="chat-layout">
 
-            <!-- Context Sidebar -->
             <div class="context-panel">
                 <div>
                     <div class="status-badge status-{{ rental_request.status }}">
@@ -107,7 +108,23 @@
 
                 <div class="context-details">
                     <h2 class="context-title">{{ rental_request.gear.title }}</h2>
-                    <div class="context-price">৳{{ rental_request.gear.price_per_day }} <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: normal;">/ {{ rental_request.gear.price_period }}</span></div>
+                    <div class="context-price" id="current-price-display">
+                        {% if rental_request.negotiated_price %}
+                            ৳{{ rental_request.negotiated_price }}
+                        {% else %}
+                            ৳{{ rental_request.gear.price_per_day }}
+                        {% endif %}
+                        <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: normal;">/ {{ rental_request.gear.price_period }}</span>
+                    </div>
+                </div>
+
+                <div id="owner-controls" style="display: none; padding-top: 1rem; border-top: 1px solid rgba(128,128,128,0.2);">
+                    <p style="font-size: 0.75rem; text-transform: uppercase; color: var(--orange-primary); font-weight: 800; margin-bottom: 0.5rem;">Owner Controls</p>
+                    <label style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; display: block;">Offer Discounted Rate (৳)</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="number" id="new-price-input" class="chat-input" style="border-radius: 0.5rem; padding: 0.5rem 1rem;" placeholder="New Price">
+                        <button id="update-price-btn" onclick="updateNegotiatedPrice()" class="btn-orange" style="border-radius: 0.5rem; padding: 0.5rem 1rem; font-weight: bold; white-space: nowrap;">Update</button>
+                    </div>
                 </div>
 
                 <div class="user-block">
@@ -121,42 +138,26 @@
                 <div class="user-block" style="padding-top: 0; border-top: none;">
                     <div class="avatar-circle" style="background: var(--text-muted);">{{ rental_request.renter.username|make_list|first|upper }}</div>
                     <div class="user-names">
-                        <span class="user-role">You (Renter)</span>
+                        <span class="user-role">Renter</span>
                         <span class="username">@{{ rental_request.renter.username }}</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Chat Panel -->
             <div class="chat-panel">
                 <div class="chat-header">
-                    <div>Negotiation Chat</div>
+                    <div>Negotiation Room</div>
                     <div style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
                         <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
-                        Secure Connection
+                        Live Connection
                     </div>
                 </div>
 
                 <div class="chat-messages" id="chat-messages">
-                    <div class="system-msg">Rental request created today</div>
-
-                    <div class="msg-wrapper sent">
-                        <div class="msg-bubble">
-                            Hi! I just sent a request for the {{ rental_request.gear.title }}. Is it available for pickup tomorrow?
-                            <div class="msg-time">Just now</div>
-                        </div>
                     </div>
-
-                    <!-- Typing indicator for the visual mockup effect -->
-                    <div class="msg-wrapper received" id="typing-indicator" style="display: none;">
-                        <div class="typing">
-                            <span></span><span></span><span></span>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="chat-input-area">
-                    <input type="text" id="chat-input" class="chat-input" placeholder="Message @{{ rental_request.owner.username }}..." onkeypress="handleKeyPress(event)">
+                    <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="handleKeyPress(event)">
                     <button class="send-btn" onclick="sendMessage()">
                         <svg fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
                     </button>
@@ -169,62 +170,149 @@
     <script>
         const chatMessages = document.getElementById('chat-messages');
         const chatInput = document.getElementById('chat-input');
-        const typingIndicator = document.getElementById('typing-indicator');
+
+        const requestId = "{{ rental_request.id }}";
+        const currentUserId = localStorage.getItem('gearshare_user_id');
+        const ownerId = "{{ rental_request.owner.id }}";
+        const pricePeriod = "{{ rental_request.gear.price_period }}";
+
+        if (!currentUserId) window.location.href = '/login/';
+
+        // --- SECURITY LOGIC: Reveal Owner Controls ---
+        if (String(currentUserId) === String(ownerId)) {
+            document.getElementById('owner-controls').style.display = 'block';
+        }
 
         function scrollToBottom() {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        function handleKeyPress(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
+        // --- 1. LOAD CHAT HISTORY (passes user_id so backend marks messages as read) ---
+        async function loadHistory() {
+            try {
+                const response = await fetch(`/api/users/rental/${requestId}/messages/?user_id=${currentUserId}`);
+                const messages = await response.json();
+
+                chatMessages.innerHTML = ''; // Clear box
+
+                messages.forEach(msg => {
+                    appendMessageToUI(msg.text, msg.timestamp, String(msg.sender_id) === String(currentUserId), msg.is_system_update);
+                });
+
+                scrollToBottom();
+            } catch (err) {
+                console.error("Failed to load chat history", err);
             }
         }
+
+        // --- 2. CONNECT TO WEBSOCKETS ---
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const chatSocket = new WebSocket(`${wsProtocol}${window.location.host}/ws/chat/${requestId}/`);
+
+        chatSocket.onopen = function(e) { console.log("🔥 Engine Connected"); };
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const isMe = String(data.sender_id) === String(currentUserId);
+
+            appendMessageToUI(data.message, data.timestamp, isMe, data.is_system_update);
+            scrollToBottom();
+
+            // If the message is from the OTHER person and we're actively on the page, mark it read
+            if (!isMe) {
+                fetch(`/api/users/rental/${requestId}/messages/?user_id=${currentUserId}`).catch(() => {});
+            }
+
+            // REAL-TIME UI MAGIC! Instantly update the DOM price.
+            if (data.new_price) {
+                const priceDisplay = document.getElementById('current-price-display');
+                priceDisplay.innerHTML = `৳${data.new_price} <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: normal;">/ ${pricePeriod}</span>`;
+
+                // Flash the price orange to draw the user's eye to the change
+                priceDisplay.style.color = 'var(--text-main)';
+                setTimeout(() => { priceDisplay.style.color = 'var(--orange-primary)'; }, 300);
+            }
+        };
+
+        chatSocket.onclose = function(e) { console.error('Socket closed'); };
+
+        // --- 3. SEND REGULAR MESSAGES ---
+        function handleKeyPress(e) { if (e.key === 'Enter') sendMessage(); }
 
         function sendMessage() {
             const text = chatInput.value.trim();
             if (!text) return;
 
-            // 1. Add sent message to UI
-            const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const msgHTML = `
-                <div class="msg-wrapper sent">
-                    <div class="msg-bubble">
-                        ${text}
-                        <div class="msg-time">${timeString}</div>
-                    </div>
-                </div>
-            `;
-
-            // Insert before the typing indicator so it stays at the bottom
-            typingIndicator.insertAdjacentHTML('beforebegin', msgHTML);
+            chatSocket.send(JSON.stringify({
+                'message': text,
+                'sender_id': currentUserId
+            }));
             chatInput.value = '';
-            scrollToBottom();
-
-            // 2. Simulate owner typing back (Placeholder logic)
-            setTimeout(() => {
-                typingIndicator.style.display = 'flex';
-                scrollToBottom();
-
-                setTimeout(() => {
-                    typingIndicator.style.display = 'none';
-                    const replyHTML = `
-                        <div class="msg-wrapper received">
-                            <div class="msg-bubble">
-                                Hello! Yes, tomorrow works perfectly. Let me know what time you'd like to swing by.
-                                <div class="msg-time">Just now</div>
-                            </div>
-                        </div>
-                    `;
-                    typingIndicator.insertAdjacentHTML('beforebegin', replyHTML);
-                    scrollToBottom();
-                }, 1500); // Owner "types" for 1.5 seconds
-
-            }, 500); // 0.5s delay before owner "starts typing"
         }
 
-        // Scroll to bottom on initial load
-        scrollToBottom();
+        // --- 4. OWNER UPDATE PRICE API ---
+        async function updateNegotiatedPrice() {
+            const newPrice = document.getElementById('new-price-input').value;
+            const btn = document.getElementById('update-price-btn');
+
+            if (!newPrice) return;
+
+            btn.innerText = '...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`/api/users/rental/${requestId}/update-price/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        new_price: newPrice,
+                        user_id: currentUserId
+                    })
+                });
+
+                if (response.ok) {
+                    document.getElementById('new-price-input').value = '';
+                } else {
+                    // THE FIX: Better error handling to show exactly why the math failed
+                    const errorData = await response.json();
+                    alert(errorData.error || "Failed to update price.");
+                }
+            } catch (err) {
+                alert("Server error.");
+            }
+
+            btn.innerText = 'Update';
+            btn.disabled = false;
+        }
+
+        // --- UI HELPER ---
+        function appendMessageToUI(text, timestamp, isMe, isSystem = false) {
+            let msgHTML = '';
+
+            if (isSystem) {
+                msgHTML = `
+                    <div class="msg-wrapper system">
+                        <div class="msg-bubble">
+                            ${text}
+                            <div class="msg-time">${timestamp}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const wrapperClass = isMe ? "sent" : "received";
+                msgHTML = `
+                    <div class="msg-wrapper ${wrapperClass}">
+                        <div class="msg-bubble">
+                            ${text}
+                            <div class="msg-time">${timestamp}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            chatMessages.insertAdjacentHTML('beforeend', msgHTML);
+        }
+
+        loadHistory();
     </script>
 </body>
 </html>

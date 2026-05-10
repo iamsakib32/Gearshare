@@ -34,22 +34,21 @@
         .gs-row-3 { grid-template-columns: 1fr 1fr 1fr; }
         .gs-row-2 { grid-template-columns: 1fr 1fr; }
 
-        /* FIXED: Added resize: none to lock the description box */
         input[type=text], input[type=number], textarea {
             width: 100%; box-sizing: border-box; font-family: inherit; font-size: 1rem;
             padding: 0.75rem 1rem; border-radius: 0.75rem;
             border: 1px solid var(--input-border);
             background: var(--input-bg); color: var(--text-main);
             transition: all 0.2s;
-            height: 3.25rem; /* Match dropdown height */
+            height: 3.25rem;
         }
         input:focus, textarea:focus { border-color: var(--orange-primary); outline: none; }
-        textarea { resize: none; min-height: 100px; height: auto; } /* Lock resize, allow custom height */
+        textarea { resize: none; min-height: 100px; height: auto; }
 
         input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
 
-        /* RE-ADDED Custom Glassy Dropdown Styles */
+        /* Custom Glassy Dropdown Styles */
         .dropdown-container { position: relative; width: 100%; }
         .dropdown-btn {
             width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem;
@@ -144,7 +143,7 @@
                     <textarea id="description" placeholder="Include accessories, known wear & tear, usage rules..." required></textarea>
                 </div>
 
-                <div class="gs-row gs-row-3">
+                <div class="gs-row gs-row-2">
                     <div>
                         <label class="gs-label">Rate (৳)</label>
                         <input type="number" id="price" placeholder="2500" required />
@@ -161,6 +160,23 @@
                                 <li data-value="Hour" class="dropdown-item period-option">Hour</li>
                                 <li data-value="Day" class="dropdown-item period-option">Day</li>
                                 <li data-value="Week" class="dropdown-item period-option">Week</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gs-row gs-row-2">
+                    <div>
+                        <label class="gs-label">Pricing Type</label>
+                        <div class="dropdown-container">
+                            <input type="hidden" id="is_negotiable" value="true">
+                            <button type="button" id="negotiable-btn" class="dropdown-btn">
+                                <span id="negotiable-text">Negotiable</span>
+                                <svg style="width: 1rem; height: 1rem; color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <ul id="negotiable-menu" class="dropdown-menu">
+                                <li data-value="true" class="dropdown-item negotiable-option">Negotiable</li>
+                                <li data-value="false" class="dropdown-item negotiable-option">Fixed Price</li>
                             </ul>
                         </div>
                     </div>
@@ -248,7 +264,6 @@
 
                 <div class="gs-section">Photos</div>
 
-                <!-- 100% FIXED: 3 to 5 images logic & safe SVG Icon -->
                 <div class="gs-upload" onclick="document.getElementById('images').click()">
                     <svg style="width: 2.5rem; height: 2.5rem; color: var(--text-muted); margin: 0 auto 0.5rem auto;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     <div style="font-size:14px; font-weight:bold; color:var(--text-main); margin-bottom:4px;">Upload gear photos</div>
@@ -256,7 +271,6 @@
                     <input type="file" id="images" accept="image/*" multiple required style="display: none;" onchange="handleFileSelect(this)">
                 </div>
 
-                <!-- 100% FIXED: Safe SVG Icon -->
                 <div class="gs-trust">
                     <svg style="width: 1.5rem; height: 1.5rem; color: var(--orange-primary); flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     <div class="gs-trust-text">
@@ -302,7 +316,6 @@
 
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                // Close others
                 document.querySelectorAll('.dropdown-menu').forEach(m => {
                     if (m !== menu) m.classList.remove('show');
                 });
@@ -324,13 +337,14 @@
             });
         }
 
-        // Initialize all four custom dropdowns
+        // Initialize all five custom dropdowns (Added negotiable setup)
         setupDropdown('category-btn', 'category-menu', 'category', 'category-text', 'category-option');
         setupDropdown('period-btn', 'period-menu', 'period', 'period-text', 'period-option');
         setupDropdown('condition-btn', 'condition-menu', 'condition', 'condition-text', 'condition-option');
         setupDropdown('duration-btn', 'duration-menu', 'min_rental_duration', 'duration-text', 'duration-option');
+        setupDropdown('negotiable-btn', 'negotiable-menu', 'is_negotiable', 'negotiable-text', 'negotiable-option');
 
-        // 100% FIXED: 3 to 5 Images Validation Logic
+        // 3 to 5 Images Validation Logic
         function handleFileSelect(input) {
             const display = document.getElementById('file-name-display');
             const files = input.files;
@@ -352,7 +366,6 @@
             const msgBox = document.getElementById('message-box');
             const imageInput = document.getElementById('images');
 
-            // Hard stop if they bypassed UI check
             if (imageInput.files.length < 3 || imageInput.files.length > 5) {
                 msgBox.classList.remove('hidden');
                 msgBox.className = 'msg-box msg-error';
@@ -378,6 +391,9 @@
             formData.append('price_period', document.getElementById('period').value);
             formData.append('condition', document.getElementById('condition').value);
 
+            // THE FIX: Grabbing the Negotiable value from the hidden input
+            formData.append('is_negotiable', document.getElementById('is_negotiable').value);
+
             formData.append('replacement_value', document.getElementById('replacement_value').value);
             formData.append('min_rental_duration', document.getElementById('min_rental_duration').value);
             formData.append('available_days', activeDays);
@@ -385,7 +401,6 @@
             formData.append('pickup_location', document.getElementById('pickup_location').value);
             formData.append('cancellation_policy', policyOption);
 
-            // 100% FIXED: Correct appending for cover and gallery
             formData.append('image', imageInput.files[0]);
             for (let i = 1; i < imageInput.files.length; i++) {
                 formData.append('extra_images', imageInput.files[i]);

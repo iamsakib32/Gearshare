@@ -48,7 +48,6 @@ class GearItem(models.Model):
     price_period = models.CharField(max_length=20, default='Day')
     condition = models.CharField(max_length=50, choices=CONDITION_CHOICES, default='Good')
 
-    # This acts as the mandatory cover photo
     image = models.ImageField(upload_to='gear_images/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
 
@@ -60,6 +59,8 @@ class GearItem(models.Model):
     pickup_location = models.CharField(max_length=255, blank=True, null=True)
     cancellation_policy = models.CharField(max_length=50, default='flexible')
 
+    is_negotiable = models.BooleanField(default=True)
+
     min_trust_tier = models.IntegerField(default=7)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -67,9 +68,7 @@ class GearItem(models.Model):
         return f"{self.title} (Owned by: {self.owner.username})"
 
 
-# --- CLOUD GALLERY MODEL ---
 class GearGallery(models.Model):
-    # This links the extra 2 to 4 photos directly back to the specific GearItem
     gear = models.ForeignKey(GearItem, on_delete=models.CASCADE, related_name='gallery_images')
     image = models.ImageField(upload_to='gear_gallery/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
@@ -92,7 +91,6 @@ class RoleSwitchRequest(models.Model):
         return f"{self.user.username} wants to be {self.requested_role}"
 
 
-# --- NEW: RENTAL REQUEST & CHAT BASELINE ---
 class RentalRequest(models.Model):
     STATUS_CHOICES = (
         ('Pending', 'Pending'),
@@ -106,8 +104,25 @@ class RentalRequest(models.Model):
     owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='rentals_received')
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+
+    # THE FIX: This holds the isolated chat price, defaulting to blank until changed!
+    negotiated_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Request: {self.renter.username} -> {self.gear.title}"
+
+
+class ChatMessage(models.Model):
+    rental_request = models.ForeignKey(RentalRequest, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    text = models.TextField()
+
+    is_system_update = models.BooleanField(default=False)
+    is_read = models.BooleanField(default=False)  # True once the OTHER person has seen it
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Msg from {self.sender.username} on Req #{self.rental_request.id}"
