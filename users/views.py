@@ -12,11 +12,8 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.utils.timezone import localtime
 
-# Real-time WebSocket imports
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-
-# Price math and complex queries
 from decimal import Decimal, InvalidOperation
 from django.db.models import Q
 
@@ -202,6 +199,8 @@ class AddGearAPIView(APIView):
                 price_period=request.data.get('price_period', 'Day'),
                 condition=request.data.get('condition', 'Good'),
                 category=request.data.get('category', 'Other'),
+                location=request.data.get('location', ''),
+                area=request.data.get('area', ''),
                 replacement_value=request.data.get('replacement_value') or 0.00,
                 min_rental_duration=request.data.get('min_rental_duration', '1 day'),
                 available_days=request.data.get('available_days', 'S,M,T,W,Th,F,Sa'),
@@ -251,14 +250,14 @@ class GearDetailAPIView(APIView):
         item.price_period = request.data.get('price_period', item.price_period)
         item.condition = request.data.get('condition', item.condition)
         item.category = request.data.get('category', getattr(item, 'category', 'Other'))
+        item.location = request.data.get('location', item.location)
+        item.area = request.data.get('area', item.area)
         item.replacement_value = request.data.get('replacement_value', getattr(item, 'replacement_value', 0.00)) or 0.00
-        item.min_rental_duration = request.data.get('min_rental_duration',
-                                                    getattr(item, 'min_rental_duration', '1 day'))
+        item.min_rental_duration = request.data.get('min_rental_duration', getattr(item, 'min_rental_duration', '1 day'))
         item.available_days = request.data.get('available_days', getattr(item, 'available_days', 'S,M,T,W,Th,F,Sa'))
         item.delivery_option = request.data.get('delivery_option', getattr(item, 'delivery_option', 'Pickup only'))
         item.pickup_location = request.data.get('pickup_location', getattr(item, 'pickup_location', ''))
-        item.cancellation_policy = request.data.get('cancellation_policy',
-                                                    getattr(item, 'cancellation_policy', 'flexible'))
+        item.cancellation_policy = request.data.get('cancellation_policy', getattr(item, 'cancellation_policy', 'flexible'))
 
         if 'is_negotiable' in request.data:
             is_negotiable_str = str(request.data.get('is_negotiable')).lower()
@@ -310,7 +309,9 @@ def get_single_gear_api(request, item_id):
             'delivery_option': getattr(item, 'delivery_option', 'Pickup only'),
             'pickup_location': getattr(item, 'pickup_location', ''),
             'cancellation_policy': getattr(item, 'cancellation_policy', 'flexible'),
-            'is_negotiable': getattr(item, 'is_negotiable', True)
+            'is_negotiable': getattr(item, 'is_negotiable', True),
+            'location': getattr(item, 'location', ''),
+            'area': getattr(item, 'area', '')
         }
         return JsonResponse(data)
     except GearItem.DoesNotExist:
@@ -451,7 +452,6 @@ class ChatHistoryAPIView(APIView):
     def get(self, request, request_id):
         messages = ChatMessage.objects.filter(rental_request_id=request_id).order_by('created_at')
 
-        # Mark all messages NOT sent by this user as read when they open the chat
         viewer_id = request.query_params.get('user_id')
         if viewer_id:
             ChatMessage.objects.filter(
@@ -530,12 +530,10 @@ class UpdateChatPriceAPIView(APIView):
         return Response({"message": "Discount offered successfully!"}, status=status.HTTP_200_OK)
 
 
-# --- Facebook Messenger Style Chat List API ---
 class UserChatListAPIView(APIView):
     def get(self, request, user_id):
         user = get_object_or_404(CustomUser, id=user_id)
 
-        # Get all rental requests where the user is EITHER the owner OR the renter
         requests = RentalRequest.objects.filter(Q(owner=user) | Q(renter=user))
 
         chat_list = []
@@ -558,7 +556,6 @@ class UserChatListAPIView(APIView):
             if len(snippet) > 35:
                 snippet = snippet[:32] + "..."
 
-            # Check if there are any unread messages from the OTHER person in this room
             has_unread = ChatMessage.objects.filter(
                 rental_request=req,
                 is_read=False
@@ -572,12 +569,11 @@ class UserChatListAPIView(APIView):
                 'role_context': role_context,
                 'latest_message': snippet,
                 'is_system': latest_msg.is_system_update if latest_msg else False,
-                'has_unread': has_unread,  # <-- Messenger-style unread flag
+                'has_unread': has_unread,
                 'timestamp': localtime(latest_msg.created_at).strftime("%I:%M %p") if latest_msg else localtime(req.created_at).strftime("%I:%M %p"),
                 'sort_time': latest_msg.created_at if latest_msg else req.created_at
             })
 
-        # Sort so most recently active chats are at top
         chat_list.sort(key=lambda x: x['sort_time'], reverse=True)
 
         for item in chat_list:

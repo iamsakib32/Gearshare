@@ -60,8 +60,12 @@ class GearItem(models.Model):
     cancellation_policy = models.CharField(max_length=50, default='flexible')
 
     is_negotiable = models.BooleanField(default=True)
+    min_trust_tier = models.IntegerField(default=1)  # Let all users see gear!
 
-    min_trust_tier = models.IntegerField(default=7)
+    # --- YOUR NEW ADVANCED SEARCH FIELDS ---
+    location = models.CharField(max_length=100, blank=True, null=True)
+    area = models.CharField(max_length=100, blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -104,8 +108,6 @@ class RentalRequest(models.Model):
     owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='rentals_received')
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
-
-    # THE FIX: This holds the isolated chat price, defaulting to blank until changed!
     negotiated_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -121,7 +123,7 @@ class ChatMessage(models.Model):
     text = models.TextField()
 
     is_system_update = models.BooleanField(default=False)
-    is_read = models.BooleanField(default=False)  # True once the OTHER person has seen it
+    is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

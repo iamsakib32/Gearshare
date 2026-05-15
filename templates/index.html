@@ -15,10 +15,10 @@
     </script>
 
     <style>
-        .hero-wrapper { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 10; }
+        body { min-height: 100vh; display: flex; flex-direction: column; }
 
         /* Navbar Spacing */
-        .navbar { position: sticky; top: 0; z-index: 50; background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--glass-border); transition: background-color 0.3s, border-color 0.3s; }
+        .navbar { position: sticky; top: 0; z-index: 50; background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--glass-border); transition: background-color 0.3s, border-color 0.3s; width: 100%; }
         .nav-container { display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; padding-bottom: 1rem; }
         .nav-brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; }
         .nav-links { display: flex; align-items: center; gap: 1.5rem; }
@@ -32,8 +32,8 @@
         .nav-link { color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: 0.875rem; transition: color 0.2s; }
         .nav-link:hover { color: var(--text-main); }
 
-        /* Hero Content */
-        .hero-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; margin-top: -10vh; }
+        /* --- HERO VIEW (Welcome Page) --- */
+        #hero-view { min-height: calc(100vh - 80px); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding-bottom: 5rem; position: relative; z-index: 10; }
         .hero-badge { display: inline-block; padding: 0.375rem 1rem; border-radius: 9999px; border: 1px solid rgba(249,115,22,0.3); background: rgba(249,115,22,0.1); color: var(--orange-primary); font-size: 0.75rem; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.5rem; }
 
         .hero-title { font-size: 3rem; margin: 0 0 1.5rem 0; line-height: 1.1; font-weight: 800; }
@@ -45,8 +45,8 @@
         .button-group { display: flex; flex-direction: column; gap: 1rem; justify-content: center; width: 100%; max-width: 24rem; }
         @media (min-width: 640px) { .button-group { flex-direction: row; max-width: none; width: auto; } }
 
-        .btn-large { padding: 1rem 2rem; border-radius: 0.75rem; font-size: 1.125rem; }
-        .btn-outline { background: transparent; border: 1px solid var(--input-border); color: var(--text-main); font-weight: bold; text-decoration: none; transition: background-color 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-large { padding: 1rem 2rem; border-radius: 0.75rem; font-size: 1.125rem; cursor: pointer; border: none; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-outline { background: transparent; border: 1px solid var(--input-border); color: var(--text-main); font-weight: bold; transition: background-color 0.2s; }
         .btn-outline:hover { background-color: rgba(0,0,0,0.05); }
         html.dark .btn-outline:hover { background-color: rgba(255,255,255,0.05); }
 
@@ -62,11 +62,144 @@
         .nav-dashboard-btn { font-size: 0.875rem; font-weight: bold; color: var(--text-main); text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); transition: 0.2s; }
         .nav-dashboard-btn:hover { background: rgba(255,255,255,0.1); }
 
-        /* --- NEW: Massive Global Search Bar Styles --- */
-        .global-search-container { position: relative; max-width: 40rem; margin: 0 auto; }
-        .global-search-input { width: 100%; padding: 1.25rem 1.25rem 1.25rem 4rem; border-radius: 9999px; background: rgba(255, 255, 255, 0.05); border: 2px solid var(--glass-border); color: var(--text-main); font-size: 1.125rem; outline: none; transition: all 0.3s ease; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-        .global-search-input:focus { background: rgba(255, 255, 255, 0.1); border-color: var(--orange-primary); box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15); }
-        .global-search-icon { position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); width: 1.5rem; height: 1.5rem; color: var(--text-muted); pointer-events: none; }
+        /* --- MARKETPLACE VIEW (Search Page) --- */
+        #marketplace-view { display: none; max-width: 80rem; margin: 1.5rem auto; padding: 0 1.5rem; position: relative; z-index: 10; width: 100%; }
+
+        /* --- PROFESSIONAL SEARCH & FILTER STYLES --- */
+        .search-container-main { display: flex; flex-direction: column; gap: 0.5rem; max-width: 60rem; margin: 0 auto 2rem auto; }
+
+        .search-row { display: flex; flex-direction: column; gap: 1rem; width: 100%; align-items: center; justify-content: center; }
+        @media (min-width: 768px) { .search-row { flex-direction: row; } }
+
+        .global-search-container { position: relative; flex-grow: 1; width: 100%; }
+        .global-filter-container { position: relative; width: 160px; flex-shrink: 0; }
+
+        /* Sleek Search Inputs */
+        .global-input { width: 100%; padding: 1rem 1rem 1rem 3.5rem; border-radius: 0.75rem; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-main); font-size: 1rem; outline: none; transition: all 0.3s ease; backdrop-filter: blur(10px); }
+        html:not(.dark) .global-input { background: #ffffff; border: 1px solid #d1d5db; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .global-input:focus, .global-input.active { border-color: var(--orange-primary); box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2); }
+        .global-icon { position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); width: 1.25rem; height: 1.25rem; color: var(--text-muted); pointer-events: none; z-index: 2; }
+
+        /* Custom Dropdown UI */
+        .custom-select-trigger { cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .custom-select-arrow { width: 1.25rem; height: 1.25rem; color: var(--text-muted); transition: transform 0.3s ease; }
+        .custom-select-trigger.active .custom-select-arrow { transform: rotate(180deg); }
+
+        .custom-options-container {
+            position: absolute; top: 110%; left: 0; width: 100%; background: #1a1a1a;
+            border: 1px solid var(--glass-border); border-radius: 0.75rem;
+            box-shadow: 0 15px 30px -5px rgba(0,0,0,0.5); z-index: 100; opacity: 0;
+            visibility: hidden; transform: translateY(-10px); transition: all 0.2s ease;
+            overflow: hidden; max-height: 250px; overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .custom-options-container::-webkit-scrollbar { display: none; }
+        html:not(.dark) .custom-options-container { background: #ffffff; border: 1px solid #d1d5db; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); }
+        .custom-options-container.open { opacity: 1; visibility: visible; transform: translateY(0); }
+
+        .custom-option { padding: 0.75rem 1.25rem; font-size: 0.875rem; font-weight: 500; color: var(--text-main); cursor: pointer; transition: all 0.2s ease; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .custom-option:last-child { border-bottom: none; }
+        html:not(.dark) .custom-option { color: #1f2937; border-bottom: 1px solid rgba(0,0,0,0.05); }
+
+        .custom-option:hover { background: rgba(249, 115, 22, 0.15); color: var(--orange-primary); padding-left: 1.5rem; }
+        html:not(.dark) .custom-option:hover { background: rgba(249, 115, 22, 0.1); }
+        .custom-option.selected { background: rgba(249, 115, 22, 0.1); color: var(--orange-primary); font-weight: bold; border-left: 3px solid var(--orange-primary); }
+
+        /* Quick Search Pills */
+        .quick-pills { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin-top: 1rem; }
+        .pill-btn { display: inline-flex; align-items: center; padding: 0.5rem 1rem; border-radius: 9999px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-main); font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+        html:not(.dark) .pill-btn { background: #ffffff; border-color: #d1d5db; color: #374151; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .pill-btn:hover { background: rgba(249, 115, 22, 0.1); border-color: rgba(249, 115, 22, 0.3); color: var(--orange-primary); transform: translateY(-2px); }
+        .pill-btn.active { background: var(--orange-primary); color: white; border-color: var(--orange-primary); }
+        .pill-icon { width: 1.1rem; height: 1.1rem; margin-right: 0.4rem; }
+
+        /* Advanced Filter Panel */
+        .advanced-filter-toggle {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 0.6rem 1.25rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            transition: all 0.2s ease;
+        }
+        html:not(.dark) .advanced-filter-toggle { background: rgba(0,0,0,0.03); border-color: #d1d5db; color: #374151; }
+        .advanced-filter-toggle:hover {
+            background: rgba(249, 115, 22, 0.1);
+            border-color: var(--orange-primary);
+            color: var(--orange-primary);
+            transform: translateY(-2px);
+        }
+
+        .advanced-filter-panel { display: none; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 1rem; padding: 1.5rem; margin-top: 1.5rem; text-align: left; }
+        html:not(.dark) .advanced-filter-panel { background: #f9fafb; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .advanced-filter-panel.open { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .advanced-filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; align-items: end; }
+
+        .filter-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .filter-label { font-size: 0.75rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* Negotiable Toggle */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; margin-top: 0.25rem; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 34px; }
+        html:not(.dark) .slider { background-color: #d1d5db; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--orange-primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Card Enhancements */
+        .badge-negotiable { font-size: 0.7rem; font-weight: bold; color: #22c55e; border: 1px solid rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); padding: 0.1rem 0.4rem; border-radius: 0.25rem; text-transform: uppercase; margin-left: 0.5rem; }
+
+        /* THE FIX: Fixed Price Badge - Now RED */
+        .badge-fixed { font-size: 0.7rem; font-weight: bold; color: #ef4444; border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); padding: 0.1rem 0.4rem; border-radius: 0.25rem; text-transform: uppercase; margin-left: 0.5rem; }
+        html:not(.dark) .badge-fixed { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #dc2626; }
+
+        .badge-area { font-size: 0.7rem; font-weight: bold; color: var(--text-main); background: rgba(255,255,255,0.1); padding: 0.1rem 0.4rem; border-radius: 0.25rem; text-transform: uppercase; }
+        html:not(.dark) .badge-area { background: #e5e7eb; color: #111827; }
+
+        /* Chat Dropdown UI logic generated by Teammate */
+        .chat-dropdown-container { position: relative; display: flex; align-items: center; }
+        .chat-dropdown-menu {
+            position: absolute; top: 120%; right: -50px; width: 360px;
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.1); border-radius: 1rem;
+            box-shadow: 0 25px 60px -10px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.05); z-index: 100;
+            overflow: hidden; display: flex; flex-direction: column;
+            max-height: 450px; transform-origin: top right;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); opacity: 1; transform: scale(1);
+        }
+        html.dark .chat-dropdown-menu {
+            background: #18181b;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 25px 60px -10px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05);
+        }
+        .chat-dropdown-menu.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; display: none; }
+        .chat-dropdown-header { padding: 1.25rem 1.5rem; font-weight: 900; font-size: 1.5rem; border-bottom: 1px solid var(--glass-border); color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
+        .chat-dropdown-list { overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; }
+        .chat-dropdown-list::-webkit-scrollbar { width: 6px; }
+        .chat-dropdown-list::-webkit-scrollbar-track { background: transparent; }
+        .chat-dropdown-list::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 10px; }
+        .chat-item { display: flex; align-items: center; padding: 1rem 1.5rem; gap: 1rem; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(128,128,128,0.1); text-decoration: none; color: inherit; }
+        .chat-item:last-child { border-bottom: none; }
+        .chat-item:hover { background: rgba(249,115,22,0.1); }
+        .chat-item-pfp { width: 3.5rem; height: 3.5rem; border-radius: 50%; object-fit: cover; background: rgba(0,0,0,0.1); flex-shrink: 0; border: 2px solid transparent; transition: border-color 0.2s; }
+        html.dark .chat-item-pfp { background: rgba(255,255,255,0.1); }
+        .chat-item:hover .chat-item-pfp { border-color: var(--orange-primary); }
+        .chat-item-info { flex-grow: 1; overflow: hidden; }
+        .chat-item-name { font-weight: bold; font-size: 1rem; color: var(--text-main); margin: 0 0 0.1rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-item-gear { font-size: 0.7rem; color: var(--orange-primary); font-weight: 800; text-transform: uppercase; margin: 0 0 0.3rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.05em; }
+        .chat-item-msg { font-size: 0.875rem; color: var(--text-muted); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-item-time { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; padding-left: 0.5rem; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -86,6 +219,25 @@
                 <div class="nav-links">
 
                     <a href="/dashboard/" id="nav-dashboard" class="nav-dashboard-btn" style="display: none;">Dashboard</a>
+
+                    <div class="chat-dropdown-container" id="chat-dropdown-wrapper" style="display: none;">
+                        <button id="chat-dropdown-btn" class="theme-btn" style="position: relative; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;" title="Messages"
+                            onmouseover="this.style.background='rgba(249,115,22,0.2)'; this.style.borderColor='rgba(249,115,22,0.5)'; this.style.boxShadow='0 0 12px rgba(249,115,22,0.25)'"
+                            onmouseout="this.style.background='rgba(249,115,22,0.1)'; this.style.borderColor='rgba(249,115,22,0.2)'; this.style.boxShadow='none'">
+                            <svg style="width: 1.1rem; height: 1.1rem; color: var(--orange-primary);" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+                            </svg>
+                            <span id="chat-unread-dot" style="display: none; position: absolute; top: 4px; right: 4px; width: 9px; height: 9px; background: #ef4444; border-radius: 50%; border: 2px solid var(--bg-main, #0f0f10); box-shadow: 0 0 6px rgba(239,68,68,0.7); animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite;"></span>
+                        </button>
+                        <div id="chat-dropdown-menu" class="chat-dropdown-menu hidden">
+                            <div class="chat-dropdown-header">
+                                Chats
+                                <svg style="width: 1.25rem; height: 1.25rem; color: var(--orange-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                            </div>
+                            <div id="chat-dropdown-list" class="chat-dropdown-list">
+                            </div>
+                        </div>
+                    </div>
 
                     <div id="nav-role-badge" class="role-badge-container" style="display: none;">
                         <div class="pulse-dot"></div>
@@ -113,7 +265,7 @@
             </div>
         </nav>
 
-        <main class="hero-content px-6">
+        <main id="hero-view" class="hero-content px-6">
             <div class="hero-badge">Peer-to-Peer Rental Network</div>
 
             <h2 class="hero-title heading">
@@ -126,23 +278,124 @@
             </p>
 
             <div class="button-group">
-                <a href="#marketplace" class="btn-orange btn-large">Start Renting Gear</a>
+                <button onclick="window.location.hash='#marketplace'" class="btn-orange btn-large" style="border:none;">Start Renting Gear</button>
                 <a href="/login/" class="btn-outline btn-large">List Your Equipment</a>
             </div>
         </main>
 
     </div>
 
-    <section style="max-width: 80rem; margin: 4rem auto; padding: 0 1.5rem; position: relative; z-index: 10;" id="marketplace">
+    <section style="max-width: 80rem; margin: 1.5rem auto; padding: 0 1.5rem; position: relative; z-index: 10;" id="marketplace-view">
 
-        <!-- NEW: Massive Global Search Bar Panel -->
         <div id="global-marketplace-search" style="text-align: center; margin-bottom: 4rem;">
             <h2 class="heading" style="font-size: 2.5rem; margin-bottom: 1.5rem;">Find Your Perfect <span style="color: var(--orange-primary);">Gear</span></h2>
-            <div class="global-search-container">
-                <svg class="global-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-                <input type="text" id="global-search-input" class="global-search-input" placeholder="Search cameras, lenses, drones globally...">
+
+            <div class="search-container-main">
+                <div class="search-row">
+                    <div class="global-search-container">
+                        <svg class="global-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" id="global-search-input" class="global-input" placeholder="Search cameras, lenses, drones globally...">
+                    </div>
+
+                    <div class="global-filter-container" id="custom-city-dropdown">
+                        <svg class="global-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <div class="global-input custom-select-trigger" id="city-trigger" style="padding-left: 3rem;">
+                            <span id="city-selected-text" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Any City</span>
+                            <svg class="custom-select-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                        <div class="custom-options-container" id="city-options-list">
+                            <div class="custom-option selected" data-value="">Any City</div>
+                            <div class="custom-option" data-value="dhaka">Dhaka</div>
+                            <div class="custom-option" data-value="chittagong">Chittagong</div>
+                            <div class="custom-option" data-value="sylhet">Sylhet</div>
+                            <div class="custom-option" data-value="rajshahi">Rajshahi</div>
+                            <div class="custom-option" data-value="khulna">Khulna</div>
+                            <div class="custom-option" data-value="barisal">Barisal</div>
+                        </div>
+                        <input type="hidden" id="global-city-filter" value="">
+                    </div>
+
+                    <div class="global-filter-container" id="custom-area-dropdown">
+                        <svg class="global-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                        </svg>
+                        <div class="global-input custom-select-trigger" id="area-trigger" style="padding-left: 3rem;">
+                            <span id="area-selected-text" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Any Area</span>
+                            <svg class="custom-select-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                        <div class="custom-options-container" id="area-options-list">
+                            <div class="custom-option" style="cursor: not-allowed; opacity: 0.6; text-align: center; font-style: italic;">Select City First</div>
+                        </div>
+                        <input type="hidden" id="global-area-filter" value="">
+                    </div>
+                </div>
+
+                <div class="quick-pills">
+                    <button class="pill-btn" onclick="setCategoryFilter('')">
+                        <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg> All Gear
+                    </button>
+                    <button class="pill-btn" onclick="setCategoryFilter('camera')">
+                        <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg> Cameras
+                    </button>
+                    <button class="pill-btn" onclick="setCategoryFilter('drone')">
+                        <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path><path d="M13.41 10.59l4.59 -4.59"></path><path d="M10.59 13.41l-4.59 4.59"></path><path d="M10.59 10.59l-4.59 -4.59"></path><path d="M13.41 13.41l4.59 4.59"></path><circle cx="19" cy="5" r="2"></circle><circle cx="5" cy="19" r="2"></circle><circle cx="5" cy="5" r="2"></circle><circle cx="19" cy="19" r="2"></circle></svg> Drones
+                    </button>
+                    <button class="pill-btn" onclick="setCategoryFilter('projector')">
+                        <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="16" cy="12" r="3"/><line x1="6" y1="12" x2="10" y2="12"/></svg> Projectors
+                    </button>
+                    <button class="pill-btn" onclick="setCategoryFilter('audio')">
+                        <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg> Audio
+                    </button>
+                </div>
+
+                <button class="advanced-filter-toggle" onclick="document.getElementById('advanced-filters').classList.toggle('open')">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6"></path></svg>
+                    Advanced Filters
+                </button>
+
+                <div class="advanced-filter-panel" id="advanced-filters">
+                    <div class="advanced-filter-grid">
+                        <div class="filter-group">
+                            <label class="filter-label">Min Price (৳)</label>
+                            <input type="number" id="filter-min-price" class="global-input" style="padding: 0.5rem 1rem; border-radius: 0.5rem;" placeholder="e.g. 500" oninput="filterMarketplace()">
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Max Price (৳)</label>
+                            <input type="number" id="filter-max-price" class="global-input" style="padding: 0.5rem 1rem; border-radius: 0.5rem;" placeholder="e.g. 5000" oninput="filterMarketplace()">
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Condition</label>
+                            <div class="global-filter-container" id="custom-condition-dropdown" style="width: 100%;">
+                                <div class="global-input custom-select-trigger" id="condition-trigger" style="padding: 0.5rem 1rem; border-radius: 0.5rem;">
+                                    <span id="condition-selected-text">Any Condition</span>
+                                    <svg class="custom-select-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                                <div class="custom-options-container" id="condition-options-list">
+                                    <div class="custom-option selected" data-value="">Any Condition</div>
+                                    <div class="custom-option" data-value="like new">Like New</div>
+                                    <div class="custom-option" data-value="excellent">Excellent</div>
+                                    <div class="custom-option" data-value="good">Good</div>
+                                    <div class="custom-option" data-value="fair">Fair</div>
+                                </div>
+                                <input type="hidden" id="global-condition-filter" value="">
+                            </div>
+                        </div>
+
+                        <div class="filter-group" style="align-items: center;">
+                            <label class="filter-label" style="text-align: center;">Negotiable Only</label>
+                            <label class="switch">
+                                <input type="checkbox" id="filter-negotiable" onchange="filterMarketplace()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -154,22 +407,35 @@
     </section>
 
     <script>
-        // --- THEME TOGGLE LOGIC ---
+        // --- ROUTING ENGINE ---
+        function handleRouting() {
+            const hash = window.location.hash;
+            const heroView = document.getElementById('hero-view');
+            const marketplaceView = document.getElementById('marketplace-view');
+
+            if (hash === '#marketplace') {
+                if(heroView) heroView.style.display = 'none';
+                if(marketplaceView) marketplaceView.style.display = 'block';
+            } else {
+                if(heroView) heroView.style.display = 'flex';
+                if(marketplaceView) marketplaceView.style.display = 'none';
+            }
+        }
+
+        window.addEventListener('hashchange', handleRouting);
+
+        // --- THEME ---
         const themeToggleBtn = document.getElementById('theme-toggle');
         const darkIcon = document.getElementById('theme-toggle-dark-icon');
         const lightIcon = document.getElementById('theme-toggle-light-icon');
 
         function updateIcons() {
             if (document.documentElement.classList.contains('dark')) {
-                lightIcon.classList.remove('hidden');
-                darkIcon.classList.add('hidden');
+                lightIcon.classList.remove('hidden'); darkIcon.classList.add('hidden');
             } else {
-                darkIcon.classList.remove('hidden');
-                lightIcon.classList.add('hidden');
+                darkIcon.classList.remove('hidden'); lightIcon.classList.add('hidden');
             }
         }
-
-        updateIcons();
 
         themeToggleBtn.addEventListener('click', function() {
             document.documentElement.classList.toggle('dark');
@@ -177,26 +443,40 @@
             updateIcons();
         });
 
-        // --- AUTHENTICATION CHECKER & NAVBAR POPULATOR ---
+
+        // --- AUTH LOGIC & CHAT POLLING ---
         const userId = localStorage.getItem('gearshare_user_id');
         const storedRole = localStorage.getItem('gearshare_role') || 'User';
         const storedPicUrl = localStorage.getItem('gearshare_profile_pic');
 
-        if (userId) {
-            // User IS logged in: Hide Sign In / Register
-            document.getElementById('nav-login').style.display = 'none';
-            document.getElementById('nav-register').style.display = 'none';
+        function setupAuthUI() {
+            if (userId) {
+                document.getElementById('nav-login').style.display = 'none';
+                document.getElementById('nav-register').style.display = 'none';
+                document.getElementById('nav-dashboard').style.display = 'block';
+                document.getElementById('nav-role-badge').style.display = 'flex';
+                document.getElementById('nav-profile').style.display = 'block';
+                document.getElementById('nav-logout').style.display = 'block';
 
-            // Show Logged-in Elements
-            document.getElementById('nav-dashboard').style.display = 'block';
-            document.getElementById('nav-role-badge').style.display = 'flex';
-            document.getElementById('nav-profile').style.display = 'block';
-            document.getElementById('nav-logout').style.display = 'block';
+                if (storedRole !== 'admin') {
+                    const chatWrapper = document.getElementById('chat-dropdown-wrapper');
+                    if (chatWrapper) chatWrapper.style.display = 'flex';
+                }
 
-            // Populate text and image
-            document.getElementById('user-role-text').innerText = storedRole;
-            if (storedPicUrl && storedPicUrl !== 'null' && storedPicUrl !== 'undefined') {
-                document.getElementById('nav-profile-pic').src = storedPicUrl;
+                document.getElementById('user-role-text').innerText = storedRole;
+                if (storedPicUrl && storedPicUrl !== 'null' && storedPicUrl !== 'undefined') {
+                    document.getElementById('nav-profile-pic').src = storedPicUrl;
+                }
+            } else {
+                document.getElementById('nav-login').style.display = 'block';
+                document.getElementById('nav-register').style.display = 'inline-flex';
+                document.getElementById('nav-dashboard').style.display = 'none';
+                document.getElementById('nav-role-badge').style.display = 'none';
+                document.getElementById('nav-profile').style.display = 'none';
+                document.getElementById('nav-logout').style.display = 'none';
+
+                const chatWrapper = document.getElementById('chat-dropdown-wrapper');
+                if (chatWrapper) chatWrapper.style.display = 'none';
             }
         }
 
@@ -208,32 +488,143 @@
             localStorage.removeItem('gearshare_trust_tier');
             localStorage.removeItem('gearshare_trust_score');
             localStorage.removeItem('gearshare_can_switch');
-            window.location.reload();
+            window.location.href = '/login/';
         }
+
+        // CHAT LOGIC FOR NAVBAR
+        const chatDropdownBtn = document.getElementById('chat-dropdown-btn');
+        const chatDropdownMenu = document.getElementById('chat-dropdown-menu');
+        const chatDropdownList = document.getElementById('chat-dropdown-list');
+
+        if(chatDropdownBtn) {
+            chatDropdownBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                chatDropdownMenu.classList.toggle('hidden');
+                if(!chatDropdownMenu.classList.contains('hidden')) {
+                    fetchGlobalChats();
+                }
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            if(chatDropdownMenu && !chatDropdownMenu.contains(e.target) && chatDropdownBtn && !chatDropdownBtn.contains(e.target)) {
+                chatDropdownMenu.classList.add('hidden');
+            }
+        });
+
+        async function fetchGlobalChats() {
+            if(!userId) return;
+            chatDropdownList.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-muted); font-weight: bold;">Loading chats...</div>';
+            try {
+                const response = await fetch(`/api/users/chats/${userId}/`);
+                const chats = await response.json();
+
+                if(chats.length === 0) {
+                    chatDropdownList.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-muted); font-weight: bold;">No active negotiations.</div>';
+                    return;
+                }
+
+                chatDropdownList.innerHTML = '';
+                chats.forEach(chat => {
+                    const fallbackImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239CA3AF'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E";
+                    const pfp = chat.other_user_pfp || fallbackImg;
+                    const msgPrefix = chat.is_system ? `<span style="color: var(--orange-primary); font-weight: bold;">System Alert: </span>` : '';
+                    const unread = chat.has_unread;
+
+                    const nameStyle = unread ? 'font-weight: 900; color: var(--text-main);' : '';
+                    const msgStyle = unread ? 'color: var(--text-main); font-weight: 600;' : 'color: var(--text-muted); font-weight: normal;';
+                    const timeStyle = unread ? 'color: var(--orange-primary); font-weight: 900;' : '';
+                    const unreadDot = unread ? `<span style="width: 10px; height: 10px; border-radius: 50%; background: var(--orange-primary); flex-shrink: 0; box-shadow: 0 0 6px rgba(249,115,22,0.6);"></span>` : '';
+                    const rowBg = unread ? 'background: rgba(249,115,22,0.06);' : '';
+
+                    chatDropdownList.innerHTML += `
+                        <a href="/rentals/${chat.request_id}/chat/" class="chat-item" style="${rowBg}">
+                            <div style="position: relative; flex-shrink: 0;">
+                                <img src="${pfp}" class="chat-item-pfp" alt="Profile">
+                            </div>
+                            <div class="chat-item-info">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem;">
+                                    <p class="chat-item-name" style="${nameStyle}">${chat.other_user_name}</p>
+                                    <span class="chat-item-time" style="${timeStyle}">${chat.timestamp}</span>
+                                </div>
+                                <p class="chat-item-gear">${chat.role_context}: ${chat.gear_title}</p>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: space-between;">
+                                    <p class="chat-item-msg" style="${msgStyle}">${msgPrefix}${chat.latest_message}</p>
+                                    ${unreadDot}
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                });
+            } catch (err) {
+                chatDropdownList.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--danger-text); font-weight: bold;">Error loading chats.</div>';
+            }
+        }
+
+        const chatUnreadDot = document.getElementById('chat-unread-dot');
+
+        async function pollUnreadCount() {
+            if (!userId || storedRole === 'admin') return;
+            try {
+                const res = await fetch(`/api/users/chats/${userId}/`);
+                if (!res.ok) return;
+                const chats = await res.json();
+                const anyUnread = chats.some(c => c.has_unread);
+                if(chatUnreadDot) chatUnreadDot.style.display = anyUnread ? 'block' : 'none';
+            } catch (e) {}
+        }
+
+        if(chatDropdownBtn) {
+            chatDropdownBtn.addEventListener('click', () => {
+                if(chatUnreadDot) chatUnreadDot.style.display = 'none';
+            });
+        }
+        pollUnreadCount();
+        setInterval(pollUnreadCount, 15000);
+
 
         // --- FETCH PUBLIC GEAR LOGIC & LIVE SEARCH ---
         let globalGearItems = [];
+        let activeCategory = '';
 
-        // Dedicated render function so search can use it freely
+        const cityAreasMap = {
+            'dhaka': ['Gulshan', 'Banani', 'Dhanmondi', 'Mirpur', 'Uttara', 'Mohammadpur', 'Badda'],
+            'chittagong': ['Agrabad', 'Nasirabad', 'Halishahar', 'Khulshi', 'Pahartali'],
+            'sylhet': ['Zindabazar', 'Uposhohor', 'Ambarkhana', 'Bandarbazar'],
+            'rajshahi': ['Shaheb Bazar', 'Motihar', 'Boalia', 'Kazla'],
+            'khulna': ['Shib Bari', 'Sonadanga', 'Khalishpur', 'Daulatpur'],
+            'barisal': ['Sadar Road', 'Nathullabad', 'Rupatali']
+        };
+
         function renderPublicGearCards(items) {
             const container = document.getElementById('public-gear-container');
             container.innerHTML = '';
 
             if (items.length === 0) {
-                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">No gear matches your search.</div>`;
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem; background: var(--glass-bg); border-radius: 1rem; border: 1px solid var(--glass-border);">No gear matches your search criteria.</div>`;
                 return;
             }
 
             items.forEach(item => {
                 const imageUrl = item.image ? item.image : 'https://via.placeholder.com/400x200?text=No+Image';
 
-                // SMART BUTTON LOGIC
                 let actionButtonHtml = '';
                 if (userId) {
-                    actionButtonHtml = `<button onclick="window.location.href='/gear/${item.id}/'" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; background: var(--orange-primary); color: white; cursor: pointer; font-weight: bold;">View Details & Rent</button>`;
+                    // THE FIX: "View Details & Rent" triggers the Teammate's negotiation/chat page correctly
+                    actionButtonHtml = `<button onclick="window.location.href='/gear/${item.id}/'" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; background: var(--orange-primary); color: white; cursor: pointer; font-weight: bold; transition: background 0.2s;">View Details & Rent</button>`;
                 } else {
-                    actionButtonHtml = `<button onclick="window.location.href='/login/'" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; background: var(--orange-primary); color: white; cursor: pointer; font-weight: bold;">Login to Rent</button>`;
+                    actionButtonHtml = `<button onclick="window.location.href='/login/'" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: none; background: var(--orange-primary); color: white; cursor: pointer; font-weight: bold; transition: background 0.2s;">Login to Rent</button>`;
                 }
+
+                const trustScoreDisplay = item.owner_trust_score ? item.owner_trust_score.toFixed(1) : '5.0';
+                const trustTierDisplay = item.owner_trust_tier || 'Verified';
+
+                // THE FIX: Red Fixed Price Badge
+                const negBadge = item.is_negotiable
+                    ? `<span class="badge-negotiable">Negotiable</span>`
+                    : `<span class="badge-fixed">Fixed Price</span>`;
+
+                const areaBadge = item.area ? `<span class="badge-area">📍 ${item.area}</span>` : '';
 
                 const cardHtml = `
                     <div style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 1rem; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s;">
@@ -241,12 +632,22 @@
                         <div style="padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column;">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                                 <h3 class="heading" style="font-size: 1.25rem; font-weight: bold; margin: 0; color: var(--text-main);">${item.title}</h3>
-                                <span style="color: var(--orange-primary); font-weight: bold; font-size: 1.125rem;">৳${item.price_per_day}</span>
+                                <div style="text-align: right;">
+                                    <span style="color: var(--orange-primary); font-weight: bold; font-size: 1.125rem;">৳${item.price_per_day}</span>
+                                    ${negBadge}
+                                </div>
                             </div>
                             <p style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5; flex-grow: 1; margin-bottom: 1rem;">${item.description}</p>
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                <span style="font-size: 0.75rem; font-weight: bold; background: rgba(128,128,128,0.1); padding: 0.25rem 0.5rem; border-radius: 0.25rem; color: var(--text-main);">${item.condition}</span>
-                                <span style="font-size: 0.875rem; color: var(--text-muted); font-weight: 500;">@${item.owner_username}</span>
+                                <div>
+                                    <span style="font-size: 0.75rem; font-weight: bold; background: rgba(128,128,128,0.1); padding: 0.25rem 0.5rem; border-radius: 0.25rem; color: var(--text-main);">${item.condition}</span>
+                                    ${areaBadge}
+                                </div>
+
+                                <div style="text-align: right;">
+                                    <span style="font-size: 0.875rem; color: var(--text-muted); font-weight: 500; display: block;">@${item.owner_username}</span>
+                                    <span style="font-size: 0.75rem; color: var(--orange-primary); font-weight: bold;">★ ${trustScoreDisplay} <span style="color: var(--text-muted); font-weight: normal;">(${trustTierDisplay})</span></span>
+                                </div>
                             </div>
                             ${actionButtonHtml}
                         </div>
@@ -256,40 +657,167 @@
             });
         }
 
+        // --- Custom Reusable Dropdown Engine ---
+        function setupDropdown(dropdownId, triggerId, listId, textId, inputId, onChangeCallback = null) {
+            const wrapper = document.getElementById(dropdownId);
+            const trigger = document.getElementById(triggerId);
+            const list = document.getElementById(listId);
+            const text = document.getElementById(textId);
+            const hiddenInput = document.getElementById(inputId);
+
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.custom-options-container').forEach(el => {
+                    if (el !== list) el.classList.remove('open');
+                });
+                list.classList.toggle('open');
+                trigger.classList.toggle('active');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!wrapper.contains(e.target)) {
+                    list.classList.remove('open');
+                    trigger.classList.remove('active');
+                }
+            });
+
+            list.addEventListener('click', function(e) {
+                const option = e.target.closest('.custom-option');
+                if (!option || !option.hasAttribute('data-value')) return;
+
+                list.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+
+                text.innerText = option.innerText;
+                hiddenInput.value = option.getAttribute('data-value');
+
+                list.classList.remove('open');
+                trigger.classList.remove('active');
+
+                if(onChangeCallback) onChangeCallback(hiddenInput.value);
+                filterMarketplace();
+            });
+        }
+
+        // Initialize Standalone Dropdowns
+        setupDropdown('custom-condition-dropdown', 'condition-trigger', 'condition-options-list', 'condition-selected-text', 'global-condition-filter');
+        setupDropdown('custom-area-dropdown', 'area-trigger', 'area-options-list', 'area-selected-text', 'global-area-filter');
+
+        // Setup City Dropdown with the special callback to load Areas smartly
+        setupDropdown('custom-city-dropdown', 'city-trigger', 'city-options-list', 'city-selected-text', 'global-city-filter', function(selectedCity) {
+            const areaList = document.getElementById('area-options-list');
+            const areaText = document.getElementById('area-selected-text');
+            const areaInput = document.getElementById('global-area-filter');
+
+            // Reset Area
+            areaInput.value = '';
+            areaText.innerText = 'Any Area';
+
+            if (!selectedCity || !cityAreasMap[selectedCity]) {
+                areaList.innerHTML = '<div class="custom-option" style="cursor: not-allowed; opacity: 0.6; text-align: center; font-style: italic;">Select City First</div>';
+                return;
+            }
+
+            // Populate specific areas for the selected city
+            let html = '<div class="custom-option selected" data-value="">Any Area</div>';
+            cityAreasMap[selectedCity].forEach(area => {
+                html += `<div class="custom-option" data-value="${area.toLowerCase()}">${area}</div>`;
+            });
+            areaList.innerHTML = html;
+        });
+
+        // Quick Category Filter Function
+        function setCategoryFilter(category) {
+            activeCategory = category;
+            document.querySelectorAll('.pill-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            filterMarketplace();
+        }
+
+        // --- THE MASTER FILTER ALGORITHM ---
+        function filterMarketplace() {
+            const term = document.getElementById('global-search-input').value.toLowerCase().trim();
+            const city = document.getElementById('global-city-filter').value.toLowerCase();
+            const area = document.getElementById('global-area-filter').value.toLowerCase();
+
+            const minPriceRaw = document.getElementById('filter-min-price').value;
+            const maxPriceRaw = document.getElementById('filter-max-price').value;
+            const minPrice = minPriceRaw ? parseFloat(minPriceRaw) : 0;
+            const maxPrice = maxPriceRaw ? parseFloat(maxPriceRaw) : Infinity;
+
+            const condition = document.getElementById('global-condition-filter').value.toLowerCase();
+            const reqNegotiable = document.getElementById('filter-negotiable').checked;
+
+            const filteredItems = globalGearItems.filter(item => {
+
+                // 1. Text Search
+                const titleMatch = item.title && item.title.toLowerCase().includes(term);
+                const descMatch = (term.length >= 3) && item.description && item.description.toLowerCase().includes(term);
+                const matchesTerm = term === '' || titleMatch || descMatch;
+
+                // 2. City
+                let matchesCity = true;
+                if (city !== "") {
+                    matchesCity = (item.location && item.location.toLowerCase().includes(city));
+                }
+
+                // 3. Area
+                let matchesArea = true;
+                if (area !== "") {
+                    matchesArea = (item.area && item.area.toLowerCase().includes(area));
+                }
+
+                // 4. Quick Category Pill
+                let matchesCategory = true;
+                if (activeCategory !== "") {
+                    matchesCategory = (item.category && item.category.toLowerCase().includes(activeCategory)) ||
+                                      (item.title && item.title.toLowerCase().includes(activeCategory));
+                }
+
+                // 5. Price Range
+                const price = parseFloat(item.price_per_day);
+                const matchesPrice = price >= minPrice && price <= maxPrice;
+
+                // 6. Condition Custom Dropdown
+                let matchesCondition = true;
+                if (condition !== "") {
+                    matchesCondition = (item.condition && item.condition.toLowerCase() === condition);
+                }
+
+                // 7. Negotiable
+                const matchesNegotiable = reqNegotiable ? item.is_negotiable === true : true;
+
+                return matchesTerm && matchesCity && matchesArea && matchesCategory && matchesPrice && matchesCondition && matchesNegotiable;
+            });
+
+            renderPublicGearCards(filteredItems);
+        }
+
         document.addEventListener("DOMContentLoaded", async () => {
+            // Setup Initial UI states
+            updateIcons();
+            setupAuthUI();
+            handleRouting();
+
+            // Default "All Gear" to active state
+            document.querySelectorAll('.pill-btn')[0].classList.add('active');
+
             const container = document.getElementById('public-gear-container');
+
             try {
-                // 1. Grab the user ID
-                const currentUserId = localStorage.getItem('gearshare_user_id');
+                // Fetch dynamically based on if user is logged in
+                const fetchUrl = userId ? `/api/users/gear/?user_id=${userId}` : '/api/users/gear/';
 
-                // 2. Pass the user ID to the backend!
-                const fetchUrl = currentUserId ? `/api/users/gear/?user_id=${currentUserId}` : '/api/users/gear/';
-
-                // Fetch the global marketplace list using the new URL
                 const response = await fetch(fetchUrl);
                 globalGearItems = await response.json();
 
-                // Render it for the first time
                 renderPublicGearCards(globalGearItems);
 
-                // --- LIVE SEARCH HOOK ---
                 const searchInput = document.getElementById('global-search-input');
+
                 if (searchInput) {
-                    searchInput.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter') e.preventDefault(); // Stop phantom refreshes
-                    });
-
-                    searchInput.addEventListener('input', (e) => {
-                        const term = e.target.value.toLowerCase();
-
-                        const filteredItems = globalGearItems.filter(item => {
-                            return (item.title && item.title.toLowerCase().includes(term)) ||
-                                   (item.description && item.description.toLowerCase().includes(term)) ||
-                                   (item.condition && item.condition.toLowerCase().includes(term));
-                        });
-
-                        renderPublicGearCards(filteredItems);
-                    });
+                    searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+                    searchInput.addEventListener('input', filterMarketplace);
                 }
 
             } catch (err) {

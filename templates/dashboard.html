@@ -122,6 +122,9 @@
         html.dark .btn-withdraw { background-color: rgba(255,255,255,0.1); color: #FAFAFA; }
         html.dark .btn-withdraw:hover { background-color: rgba(255,255,255,0.2); }
 
+        .btn-outline { background: transparent; border: 1px solid var(--input-border); color: var(--text-main); font-weight: bold; transition: background-color 0.2s; cursor: pointer; }
+        .btn-outline:hover { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.3); color: var(--orange-primary); }
+
         .panel-standard { border: 2px dashed var(--glass-border); text-align: center; padding: 4rem; transition: all 0.5s; }
         .panel-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 5rem; height: 5rem; border-radius: 50%; background: rgba(0,0,0,0.05); margin-bottom: 1.5rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.06); }
         html.dark .panel-empty-icon { background: rgba(255,255,255,0.05); }
@@ -158,6 +161,16 @@
         .kyc-btn-approve:hover { background: #16a34a; }
         .kyc-btn-decline { flex: 1; padding: 0.75rem; background: #ef4444; color: white; font-weight: bold; border-radius: 0.75rem; border: none; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(239,68,68,0.2); transition: background 0.2s; }
         .kyc-btn-decline:hover { background: #dc2626; }
+
+        /* Card Enhancements */
+        .badge-negotiable { font-size: 0.7rem; font-weight: bold; color: #22c55e; border: 1px solid rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); padding: 0.1rem 0.4rem; border-radius: 0.25rem; text-transform: uppercase; margin-left: 0.5rem; }
+
+        /* THE FIX: Fixed Price Badge - Now RED */
+        .badge-fixed { font-size: 0.7rem; font-weight: bold; color: #ef4444; border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); padding: 0.1rem 0.4rem; border-radius: 0.25rem; text-transform: uppercase; margin-left: 0.5rem; }
+        html:not(.dark) .badge-fixed { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #dc2626; }
+
+        .badge-area { font-size: 0.7rem; font-weight: bold; color: var(--text-main); background: rgba(255,255,255,0.1); padding: 0.1rem 0.4rem; border-radius: 0.25rem; text-transform: uppercase; }
+        html:not(.dark) .badge-area { background: #e5e7eb; color: #111827; }
     </style>
 </head>
 <body>
@@ -227,10 +240,10 @@
                     <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
-                    <input type="text" id="gear-search-input" class="search-input" placeholder="Search gear...">
+                    <input type="text" id="gear-search-input" class="search-input" placeholder="Search your inventory...">
                 </div>
 
-                <a href="/" style="font-size: 0.875rem; font-weight: bold; color: var(--text-main); text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); transition: 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                <a href="/#marketplace" style="font-size: 0.875rem; font-weight: bold; color: var(--text-main); text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); transition: 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
                     Browse Gear
                 </a>
 
@@ -241,7 +254,6 @@
                         <svg style="width: 1.1rem; height: 1.1rem; color: var(--orange-primary);" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
                         </svg>
-                        <!-- Unread red dot badge -->
                         <span id="chat-unread-dot" style="display: none; position: absolute; top: 4px; right: 4px; width: 9px; height: 9px; background: #ef4444; border-radius: 50%; border: 2px solid var(--bg-main, #0f0f10); box-shadow: 0 0 6px rgba(239,68,68,0.7); animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite;"></span>
                     </button>
                     <div id="chat-dropdown-menu" class="chat-dropdown-menu hidden">
@@ -250,7 +262,7 @@
                             <svg style="width: 1.25rem; height: 1.25rem; color: var(--orange-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                         </div>
                         <div id="chat-dropdown-list" class="chat-dropdown-list">
-                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -333,7 +345,7 @@
             </div>
             <h3 class="heading" style="font-size: 1.875rem; margin: 0 0 0.5rem 0;">Ready to Rent?</h3>
             <p style="color: var(--text-muted); max-width: 32rem; margin: 0 auto 2rem auto; line-height: 1.5; font-size: 1.125rem;">Browse the global marketplace to search for high-end cameras, drones, and equipment for your next project.</p>
-            <button onclick="window.location.href='/'" class="btn-orange" style="border-radius: 0.75rem; padding: 1rem 2.5rem; font-size: 1.125rem; font-weight: bold; box-shadow: 0 10px 15px -3px rgba(249,115,22,0.3);">Search Marketplace</button>
+            <button onclick="window.location.href='/#marketplace'" class="btn-orange" style="border-radius: 0.75rem; padding: 1rem 2.5rem; font-size: 1.125rem; font-weight: bold; box-shadow: 0 10px 15px -3px rgba(249,115,22,0.3);">Search Marketplace</button>
         </div>
 
         <div id="standard-panel" class="glass-panel panel-standard hidden">
@@ -431,15 +443,19 @@
 
         // 2. Personalization
         const storedUserId = localStorage.getItem('gearshare_user_id');
-        const storedUsername = localStorage.getItem('gearshare_username') || 'Guest';
-        const storedRole = localStorage.getItem('gearshare_role') || 'User';
+        const storedUsername = (localStorage.getItem('gearshare_username') || 'Guest').toLowerCase();
+        const storedRole = (localStorage.getItem('gearshare_role') || 'user').toLowerCase();
+
+        const displayUsername = localStorage.getItem('gearshare_username') || 'Guest';
+        const displayRole = localStorage.getItem('gearshare_role') || 'User';
+
         const storedPicUrl = localStorage.getItem('gearshare_profile_pic');
         const storedTier = localStorage.getItem('gearshare_trust_tier') || 'Unverified';
         const storedScore = localStorage.getItem('gearshare_trust_score') || '5.0';
         let canSwitch = localStorage.getItem('gearshare_can_switch') === 'true';
 
-        document.getElementById('display-username').innerText = storedUsername;
-        document.getElementById('user-role-badge').innerText = storedRole;
+        document.getElementById('display-username').innerText = displayUsername;
+        document.getElementById('user-role-badge').innerText = displayRole;
         document.getElementById('display-trust-tier').innerText = storedTier;
         document.getElementById('display-trust-score').innerText = storedScore;
 
@@ -452,7 +468,7 @@
             document.getElementById('header-profile-pic').src = storedPicUrl;
         }
 
-        // --- THE FIX: Hide Chat Icon ONLY if Admin ---
+        // --- HIDE CHAT ICON ONLY IF ADMIN ---
         if (storedRole === 'admin') {
             const chatWrapper = document.getElementById('chat-dropdown-wrapper');
             if(chatWrapper) chatWrapper.style.display = 'none';
@@ -462,16 +478,18 @@
         const chatDropdownMenu = document.getElementById('chat-dropdown-menu');
         const chatDropdownList = document.getElementById('chat-dropdown-list');
 
-        chatDropdownBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            chatDropdownMenu.classList.toggle('hidden');
-            if(!chatDropdownMenu.classList.contains('hidden')) {
-                fetchGlobalChats();
-            }
-        });
+        if(chatDropdownBtn) {
+            chatDropdownBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                chatDropdownMenu.classList.toggle('hidden');
+                if(!chatDropdownMenu.classList.contains('hidden')) {
+                    fetchGlobalChats();
+                }
+            });
+        }
 
         document.addEventListener('click', (e) => {
-            if(!chatDropdownMenu.contains(e.target) && !chatDropdownBtn.contains(e.target)) {
+            if(chatDropdownMenu && !chatDropdownMenu.contains(e.target) && chatDropdownBtn && !chatDropdownBtn.contains(e.target)) {
                 chatDropdownMenu.classList.add('hidden');
             }
         });
@@ -495,7 +513,6 @@
                     const msgPrefix = chat.is_system ? `<span style="color: var(--orange-primary); font-weight: bold;">System Alert: </span>` : '';
                     const unread = chat.has_unread;
 
-                    // Messenger-style: bold name + white/bright message + orange dot if unread
                     const nameStyle = unread ? 'font-weight: 900; color: var(--text-main);' : '';
                     const msgStyle = unread
                         ? 'color: var(--text-main); font-weight: 600;'
@@ -530,7 +547,6 @@
             }
         }
 
-        // --- RED DOT: driven by fetchGlobalChats result, no separate polling endpoint needed ---
         const chatUnreadDot = document.getElementById('chat-unread-dot');
 
         async function pollUnreadCount() {
@@ -540,18 +556,20 @@
                 if (!res.ok) return;
                 const chats = await res.json();
                 const anyUnread = chats.some(c => c.has_unread);
-                chatUnreadDot.style.display = anyUnread ? 'block' : 'none';
+                if(chatUnreadDot) {
+                    chatUnreadDot.style.display = anyUnread ? 'block' : 'none';
+                }
             } catch (e) {
                 // silently fail
             }
         }
 
-        // Hide dot when user opens the chat dropdown (they're viewing now)
-        chatDropdownBtn.addEventListener('click', () => {
-            chatUnreadDot.style.display = 'none';
-        });
+        if(chatDropdownBtn) {
+            chatDropdownBtn.addEventListener('click', () => {
+                if(chatUnreadDot) chatUnreadDot.style.display = 'none';
+            });
+        }
 
-        // Poll immediately on load, then every 15 seconds
         pollUnreadCount();
         setInterval(pollUnreadCount, 15000);
 
@@ -750,7 +768,6 @@
             const standardPanel = document.getElementById('standard-panel');
             const gearHeader = document.getElementById('gear-header');
             const gearContainer = document.getElementById('gear-container');
-            const storedUsername = localStorage.getItem('gearshare_username');
             const currentUserId = localStorage.getItem('gearshare_user_id');
 
             try {
@@ -758,7 +775,7 @@
                 const response = await fetch(fetchUrl);
                 const allItems = await response.json();
 
-                loadedGearItems = allItems.filter(item => item.owner_username === storedUsername);
+                loadedGearItems = allItems.filter(item => item.owner_username.toLowerCase() === storedUsername);
 
                 if (loadedGearItems.length === 0) {
                     standardPanel.classList.remove('hidden');
@@ -794,13 +811,21 @@
                     </div>
                 `;
 
+                // THE FIX: Fixed Price Badge - Now RED
+                const negBadge = item.is_negotiable
+                    ? `<span class="badge-negotiable">Negotiable</span>`
+                    : `<span class="badge-fixed">Fixed Price</span>`;
+
                 const cardHtml = `
                     <div class="glass-panel stat-card" style="padding: 0; display: flex; flex-direction: column;">
                         <img src="${imageUrl}" alt="${item.title}" style="width: 100%; height: 200px; object-fit: cover; border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
                         <div style="padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column;">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                                 <h3 class="heading" style="font-size: 1.25rem; margin: 0;">${item.title}</h3>
-                                <span style="color: var(--orange-primary); font-weight: bold; font-size: 1.125rem;">৳${item.price_per_day}</span>
+                                <div style="text-align: right;">
+                                    <span style="color: var(--orange-primary); font-weight: bold; font-size: 1.125rem;">৳${item.price_per_day}</span>
+                                    ${negBadge}
+                                </div>
                             </div>
                             <p style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5; flex-grow: 1; margin-bottom: 1rem;">${item.description}</p>
                             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -814,7 +839,7 @@
             });
         }
 
-        //  REAL-TIME SEARCH BAR LOGIC
+        //  THE FIX: REAL-TIME SEARCH BAR LOGIC ONLY SCANS TITLE AND DESCRIPTION
         const navbarSearch = document.getElementById('gear-search-input');
         if (navbarSearch) {
             navbarSearch.addEventListener('keydown', (e) => {
@@ -822,26 +847,30 @@
             });
 
             navbarSearch.addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase();
+                const term = e.target.value.toLowerCase().trim();
                 const standardPanel = document.getElementById('standard-panel');
                 const gearHeader = document.getElementById('gear-header');
                 const gearContainer = document.getElementById('gear-container');
 
                 if (storedRole === 'owner') {
-                    standardPanel.classList.add('hidden');
-                    gearHeader.classList.remove('hidden');
-                    gearHeader.style.display = 'flex';
-                    gearContainer.classList.remove('hidden');
-
                     const filteredItems = loadedGearItems.filter(item => {
-                        return (item.title && item.title.toLowerCase().includes(term)) ||
-                               (item.description && item.description.toLowerCase().includes(term)) ||
-                               (item.condition && item.condition.toLowerCase().includes(term));
+                        if (term === '') return true;
+
+                        const titleMatch = item.title && item.title.toLowerCase().includes(term);
+                        const descMatch = item.description && item.description.toLowerCase().includes(term);
+
+                        return titleMatch || descMatch;
                     });
 
-                    renderGearCards(filteredItems);
+                    if (filteredItems.length > 0 || loadedGearItems.length > 0) {
+                        standardPanel.classList.add('hidden');
+                        gearHeader.classList.remove('hidden');
+                        gearHeader.style.display = 'flex';
+                        gearContainer.classList.remove('hidden');
+                        renderGearCards(filteredItems);
+                    }
 
-                    if (term.trim() === '' && loadedGearItems.length === 0) {
+                    if (term === '' && loadedGearItems.length === 0) {
                         standardPanel.classList.remove('hidden');
                         gearHeader.classList.add('hidden');
                         gearContainer.classList.add('hidden');
