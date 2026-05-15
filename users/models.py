@@ -30,6 +30,12 @@ class CustomUser(AbstractUser):
 
     can_switch_role = models.BooleanField(default=False)
     role_status_msg = models.CharField(max_length=255, blank=True, null=True)
+    # --- AUTHENTICATION & SECURITY FIELDS ---
+    google_id = models.CharField(max_length=200, blank=True, null=True, unique=True)
+    auth_provider = models.CharField(max_length=50, default='email', null=True, blank=True)
+    otp_code = models.CharField(max_length=6, blank=True, null=True)
+    otp_expiration = models.DateTimeField(blank=True, null=True)
+    otp_failed_attempts = models.IntegerField(default=0)
 
     def __str__(self):
         return self.username

@@ -8,14 +8,17 @@ from .models import CustomUser, RoleSwitchRequest, GearItem, GearGallery, Rental
 from django.utils import timezone
 from datetime import timedelta
 from .serializers import GearItemSerializer
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse, HttpResponse
 from django.utils.timezone import localtime
-
+from urllib.parse import urlencode
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from decimal import Decimal, InvalidOperation
 from django.db.models import Q
+import random, requests
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 class RegisterView(APIView):
@@ -27,50 +30,6 @@ class RegisterView(APIView):
             serializer.save()
             return Response({"message": "User registered successfully!"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class LoginView(APIView):
-    def post(self, request):
-        login_id = request.data.get('username')
-        password = request.data.get('password')
-
-        if '@' in str(login_id):
-            try:
-                user_obj = CustomUser.objects.get(email=login_id)
-                login_id = user_obj.username
-            except CustomUser.DoesNotExist:
-                pass
-
-        user = authenticate(username=login_id, password=password)
-
-        if user:
-            if user.trust_tier == 'Suspended' and user.suspension_date:
-                if timezone.now() > user.suspension_date + timedelta(days=3):
-                    return Response({"error": "Account Permanently Locked"}, status=status.HTTP_403_FORBIDDEN)
-
-            try:
-                profile_pic_url = user.profile_picture.url if user.profile_picture else None
-            except ValueError:
-                profile_pic_url = None
-
-            role_msg = user.role_status_msg
-            if role_msg:
-                user.role_status_msg = ""
-                user.save()
-
-            return Response({
-                "message": "Login successful!",
-                "user_id": user.id,
-                "username": user.username,
-                "role": user.role,
-                "profile_picture": profile_pic_url,
-                "trust_tier": user.trust_tier,
-                "trust_score": user.trust_score,
-                "can_switch_role": user.can_switch_role,
-                "role_status_msg": role_msg
-            }, status=status.HTTP_200_OK)
-
-        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class PendingKYCView(APIView):
@@ -159,18 +118,21 @@ def get_user_tier_level(tier_string):
 class GearListView(APIView):
     def get(self, request):
         user_id = request.query_params.get('user_id')
-        user_clearance = 1.0
+
         if user_id:
             try:
                 user = CustomUser.objects.get(id=user_id)
                 user_clearance = user.trust_score
+                items = GearItem.objects.filter(
+                    is_active=True,
+                    min_trust_tier__lte=user_clearance
+                ).select_related('owner')
             except CustomUser.DoesNotExist:
-                pass
-
-        items = GearItem.objects.filter(
-            is_active=True,
-            min_trust_tier__lte=user_clearance
-        ).select_related('owner')
+                # Invalid user_id — fall back to showing everything
+                items = GearItem.objects.filter(is_active=True).select_related('owner')
+        else:
+            # Logged-out users see all active listings — trust filtering only applies when renting
+            items = GearItem.objects.filter(is_active=True).select_related('owner')
 
         serializer = GearItemSerializer(items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -580,3 +542,250 @@ class UserChatListAPIView(APIView):
             del item['sort_time']
 
         return Response(chat_list, status=status.HTTP_200_OK)
+
+
+# ─────────────────────────────────────────────────────
+# HELPER: Brevo Email Sender
+# ─────────────────────────────────────────────────────
+def send_otp_email(email, code, purpose):
+    if purpose == 'login':
+        subject = '🔐 GearShare — Your Login OTP'
+        body = f"Hello,\n\nYour login OTP is:\n\n{code}\n\nThis code expires in 10 minutes. Do NOT share it with anyone."
+    else:
+        subject = '🚨 GearShare — Password Reset'
+        body = f"Hello,\n\nYour password reset code is:\n\n{code}\n\nIf you did not request this, ignore this email."
+
+    send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
+
+
+# ─────────────────────────────────────────────────────
+# SECURE 2FA & PASSWORD RESET APIs
+# ─────────────────────────────────────────────────────
+class SendLoginOTPView(APIView):
+    def post(self, request):
+        login_id = request.data.get('username')
+        password = request.data.get('password')
+
+        if '@' in str(login_id):
+            try:
+                user_obj = CustomUser.objects.get(email=login_id)
+                login_id = user_obj.username
+            except CustomUser.DoesNotExist:
+                pass
+
+        user = authenticate(username=login_id, password=password)
+
+        if user:
+            if user.trust_tier == 'Suspended' and user.suspension_date:
+                if timezone.now() > user.suspension_date + timedelta(days=3):
+                    return Response({"error": "Account Permanently Locked"}, status=status.HTTP_403_FORBIDDEN)
+
+            if user.auth_provider == 'google':
+                return Response({"error": "Use 'Sign in with Google' for this account."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            otp = str(random.randint(100000, 999999))
+            user.otp_code = otp
+            user.otp_expiration = timezone.now() + timedelta(minutes=10)
+            user.otp_failed_attempts = 0
+            user.save()
+
+            send_otp_email(user.email, otp, 'login')
+
+            return Response({"message": "OTP sent!", "email": user.email}, status=status.HTTP_200_OK)
+
+        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class VerifyLoginOTPView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+
+        try:
+            user = CustomUser.objects.get(email=email)
+
+            if user.otp_failed_attempts >= 3:
+                user.otp_code = None
+                user.save()
+                return Response({"error": "Too many failed attempts. Request a new OTP."},
+                                status=status.HTTP_403_FORBIDDEN)
+
+            if not user.otp_expiration or timezone.now() > user.otp_expiration:
+                return Response({"error": "OTP expired."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if user.otp_code != otp:
+                user.otp_failed_attempts += 1
+                user.save()
+                return Response({"error": f"Invalid OTP. {3 - user.otp_failed_attempts} attempts left."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            # Success!
+            user.otp_code = None
+            user.otp_expiration = None
+            user.otp_failed_attempts = 0
+            user.save()
+
+            try:
+                profile_pic_url = user.profile_picture.url if user.profile_picture else None
+            except ValueError:
+                profile_pic_url = None
+
+            role_msg = user.role_status_msg
+            if role_msg:
+                user.role_status_msg = ""
+                user.save()
+
+            return Response({
+                "message": "Login successful!",
+                "user_id": user.id,
+                "username": user.username,
+                "role": user.role,
+                "profile_picture": profile_pic_url,
+                "trust_tier": user.trust_tier,
+                "trust_score": user.trust_score,
+                "can_switch_role": user.can_switch_role,
+                "role_status_msg": role_msg
+            }, status=status.HTTP_200_OK)
+
+        except CustomUser.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class SendResetOTPView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        try:
+            user = CustomUser.objects.get(email=email)
+            if user.auth_provider == 'google':
+                return Response({"message": "If this email exists, an OTP has been sent."},
+                                status=status.HTTP_200_OK)
+
+            otp = str(random.randint(100000, 999999))
+            user.otp_code = otp
+            user.otp_expiration = timezone.now() + timedelta(minutes=10)
+            user.otp_failed_attempts = 0
+            user.save()
+
+            send_otp_email(user.email, otp, 'reset')
+        except CustomUser.DoesNotExist:
+            pass
+        return Response({"message": "If this email exists, an OTP has been sent."}, status=status.HTTP_200_OK)
+
+
+class ResetPasswordWithOTPView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+        new_password = request.data.get('new_password')
+
+        try:
+            user = CustomUser.objects.get(email=email)
+
+            if user.otp_failed_attempts >= 3:
+                user.otp_code = None
+                user.save()
+                return Response({"error": "Too many failed attempts. Request a new OTP."},
+                                status=status.HTTP_403_FORBIDDEN)
+
+            if not user.otp_expiration or timezone.now() > user.otp_expiration:
+                return Response({"error": "OTP expired."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if user.otp_code != otp:
+                user.otp_failed_attempts += 1
+                user.save()
+                return Response({"error": "Invalid OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
+            user.set_password(new_password)
+            user.otp_code = None
+            user.otp_expiration = None
+            user.otp_failed_attempts = 0
+            user.save()
+
+            return Response({"message": "Password reset successfully!"}, status=status.HTTP_200_OK)
+
+        except CustomUser.DoesNotExist:
+            return Response({"error": "Invalid request."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ─────────────────────────────────────────────────────
+# GOOGLE OAUTH: REDIRECT & CALLBACK
+# ─────────────────────────────────────────────────────
+class GoogleLoginRedirectView(APIView):
+    def get(self, request):
+        google_auth_url = "https://accounts.google.com/o/oauth2/v2/auth"
+        params = {
+            "client_id": settings.GOOGLE_OAUTH_CLIENT_ID,
+            "response_type": "code",
+            "redirect_uri": settings.GOOGLE_OAUTH_REDIRECT_URI,
+            "scope": "openid email profile",
+            "access_type": "offline",
+            "prompt": "select_account"
+        }
+        url = f"{google_auth_url}?{urlencode(params)}"
+        return redirect(url)
+
+
+class GoogleAuthCallbackView(APIView):
+    def get(self, request):
+        code = request.GET.get("code")
+        if not code:
+            return HttpResponse("Error: No code provided by Google.", status=400)
+
+        # 1. Exchange code for access token
+        token_url = "https://oauth2.googleapis.com/token"
+        data = {
+            "client_id": settings.GOOGLE_OAUTH_CLIENT_ID,
+            "client_secret": settings.GOOGLE_OAUTH_CLIENT_SECRET,
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": settings.GOOGLE_OAUTH_REDIRECT_URI
+        }
+        res = requests.post(token_url, data=data)
+        if not res.ok:
+            return HttpResponse("Error: Failed to exchange token with Google.", status=400)
+
+        access_token = res.json().get("access_token")
+
+        # 2. Fetch User Info from Google
+        user_info_url = "https://www.googleapis.com/oauth2/v2/userinfo"
+        user_res = requests.get(user_info_url, headers={"Authorization": f"Bearer {access_token}"})
+        if not user_res.ok:
+            return HttpResponse("Error: Failed to fetch user profile.", status=400)
+
+        user_data = user_res.json()
+        email = user_data.get("email")
+        google_id = user_data.get("id")
+        first_name = user_data.get("given_name", "")
+        last_name = user_data.get("family_name", "")
+
+        # 3. Look up existing account — Google OAuth is sign-in only, not registration
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            return render(request, 'no_account.html', {'email': email})
+
+        # Link Google ID to existing account on first Google sign-in
+        if not user.google_id:
+            user.google_id = google_id
+            user.auth_provider = 'google'
+            user.save()
+
+        # 4. Generate Frontend Payload (Invisible Redirect)
+        html = f"""
+        <html>
+        <body style="background: #111827; color: #F97316; font-family: sans-serif; text-align: center; padding-top: 5rem;">
+            <h2>Google Link Established. Entering Vault...</h2>
+            <script>
+                localStorage.setItem('gearshare_user_id', '{user.id}');
+                localStorage.setItem('gearshare_username', '{user.username}');
+                localStorage.setItem('gearshare_role', '{user.role}');
+                localStorage.setItem('gearshare_trust_tier', '{user.trust_tier}');
+                localStorage.setItem('gearshare_trust_score', '{user.trust_score}');
+                localStorage.setItem('gearshare_can_switch', '{str(user.can_switch_role).lower()}');
+                window.location.href = '/dashboard/';
+            </script>
+        </body>
+        </html>
+        """
+        return HttpResponse(html)

@@ -1,15 +1,26 @@
 from django.urls import path
-from .views import (RegisterView, LoginView, PendingKYCView, ApproveKYCView,
+from .views import (RegisterView, PendingKYCView, ApproveKYCView,
                     DeclineKYCView, ResubmitKYCView, GearListView, AddGearAPIView,
                     GearDetailAPIView, get_single_gear_api, SubmitRoleSwitchAPIView,
                     PendingRoleSwitchAPIView, ApproveRoleSwitchAPIView,
                     DeclineRoleSwitchAPIView, ToggleRoleAPIView,
                     SubmitRentalRequestAPIView, ChatHistoryAPIView,
-                    UpdateChatPriceAPIView, UserChatListAPIView)
+                    UpdateChatPriceAPIView, UserChatListAPIView,
+                    SendLoginOTPView, VerifyLoginOTPView, SendResetOTPView, ResetPasswordWithOTPView,
+                    GoogleLoginRedirectView, GoogleAuthCallbackView)
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
-    path('login/', LoginView.as_view(), name='login'),
+
+    # --- NEW SECURE OTP ROUTES ---
+    path('otp/send-login/', SendLoginOTPView.as_view(), name='otp_send_login'),
+    path('otp/verify-login/', VerifyLoginOTPView.as_view(), name='otp_verify_login'),
+    path('otp/send-reset/', SendResetOTPView.as_view(), name='otp_send_reset'),
+    path('otp/reset-password/', ResetPasswordWithOTPView.as_view(), name='otp_reset_password'),
+
+    # --- GOOGLE OAUTH ROUTES ---
+    path('auth/google/', GoogleLoginRedirectView.as_view(), name='google_login'),
+    path('auth/google/callback/', GoogleAuthCallbackView.as_view(), name='google_callback'),
 
     path('kyc-pending/', PendingKYCView.as_view(), name='kyc_pending'),
     path('kyc-approve/<int:user_id>/', ApproveKYCView.as_view(), name='kyc_approve'),

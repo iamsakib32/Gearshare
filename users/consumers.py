@@ -2,6 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from .models import ChatMessage, RentalRequest, CustomUser
+from django.utils.timezone import localtime
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -45,7 +46,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'message': message,
                 'sender_id': sender_id,
                 'is_system_update': False,  # Normal user messages are False
-                'timestamp': saved_msg.created_at.strftime("%I:%M %p"),  # e.g., "02:30 PM"
+                'timestamp': localtime(saved_msg.created_at).strftime("%I:%M %p"),
             }
         )
 

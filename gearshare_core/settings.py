@@ -185,3 +185,21 @@ STORAGES = {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
+
+# ─────────────────────────────────────────
+# 📧 BREVO SMTP CONFIGURATION (REAL EMAILS)
+# ─────────────────────────────────────────
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp-relay.brevo.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'ab5e58001@smtp-brevo.com'
+EMAIL_HOST_PASSWORD = 'xsmtpsib-28682d3c325e3d912de666349328d550c04a4095d80a82ef6e130db54a346db1-Vd7ZWBIyVX2yhxjR'
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = 'hemalfarouqe0651@gmail.com'
+
+# ─────────────────────────────────────────
+# 🌐 GOOGLE OAUTH CONFIGURATION
+# ─────────────────────────────────────────
+GOOGLE_OAUTH_CLIENT_ID = '37607482160-fjccfqegls4h79eaubs14h76pn6pjo9s.apps.googleusercontent.com'
+GOOGLE_OAUTH_CLIENT_SECRET = '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'
+GOOGLE_OAUTH_REDIRECT_URI = 'http://localhost:8000/api/users/auth/google/callback/'

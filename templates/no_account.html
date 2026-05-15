@@ -1,0 +1,173 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GearShare | No Account Found</title>
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <script>
+        if (localStorage.getItem('gs-theme') === 'light' || (!('gs-theme' in localStorage) && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <style>
+        .page-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            position: relative;
+            z-index: 10;
+            overflow: hidden;
+        }
+        .countdown-bar-track {
+            width: 100%;
+            height: 3px;
+            background: var(--glass-border);
+            border-radius: 2px;
+            margin-top: 1.75rem;
+            overflow: hidden;
+        }
+        .countdown-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: var(--orange-primary);
+            border-radius: 2px;
+            transition: width linear;
+        }
+        .countdown-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 0.6rem;
+        }
+        .footer-links {
+            margin-top: 2rem;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 1.5rem;
+            font-size: 0.875rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+        .footer-links a {
+            text-decoration: none;
+            transition: color 0.2s;
+            font-weight: bold;
+            color: var(--orange-primary);
+        }
+        .footer-links a:hover { color: var(--orange-hover); }
+
+        .icon-badge {
+            width: 4rem;
+            height: 4rem;
+            border-radius: 1rem;
+            background: rgba(249, 115, 22, 0.1);
+            border: 1px solid rgba(249, 115, 22, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem auto;
+        }
+        .email-chip {
+            display: inline-block;
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            padding: 0.4rem 0.85rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.75rem;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glow-orb orb-1" style="width: 400px; height: 400px; top: -10%; left: -10%;"></div>
+    <div class="glow-orb orb-2" style="width: 500px; height: 500px; bottom: -10%; right: -10%;"></div>
+
+    <div class="page-wrapper">
+        <div class="glass-panel" style="max-width: 26rem; width: 100%; text-align: center;">
+
+            <!-- Icon -->
+            <div class="icon-badge">
+                <svg fill="none" stroke="var(--orange-primary)" viewBox="0 0 24 24" style="width: 1.75rem; height: 1.75rem;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+            </div>
+
+            <!-- Heading -->
+            <h1 class="heading" style="font-size: 1.6rem; margin: 0 0 0.4rem 0;">No Account Found</h1>
+            <p class="text-muted" style="font-size: 0.85rem; margin: 0 0 1.25rem 0;">
+                This Google account is not registered on GearShare.
+            </p>
+
+            <!-- Email chip -->
+            <div class="email-chip">{{ email }}</div>
+
+            <p class="text-muted" style="font-size: 0.8rem; margin: 0 0 1.5rem 0;">
+                You need to apply for an account first before using Google Sign-In.
+            </p>
+
+            <!-- CTA -->
+            <a href="/register/" class="btn-orange w-full heading"
+               style="display: block; font-size: 1rem; padding: 0.9rem 1rem; border-radius: 0.75rem;
+                      box-shadow: 0 8px 15px -3px rgba(249,115,22,0.25); text-decoration: none; text-align: center;">
+                Apply for Account
+            </a>
+
+            <!-- Back link -->
+            <div style="margin-top: 1.25rem;">
+                <a href="/login/" style="font-size: 0.8rem; color: var(--text-muted); text-decoration: none;
+                   font-weight: 500; display: inline-flex; align-items: center; gap: 0.3rem; transition: color 0.2s;"
+                   onmouseover="this.style.color='var(--orange-primary)'"
+                   onmouseout="this.style.color='var(--text-muted)'">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 0.9rem; height: 0.9rem;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Back to Sign In
+                </a>
+            </div>
+
+            <!-- Auto-redirect countdown bar -->
+            <div class="countdown-bar-track">
+                <div class="countdown-bar-fill" id="countdown-bar"></div>
+            </div>
+            <p class="countdown-text">Redirecting to sign in in <span id="countdown-num">5</span>s</p>
+
+            <div class="footer-links">
+                <p style="margin: 0;">New to GearShare? <a href="/register/">Apply for Account</a></p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const DURATION = 5000;
+        const bar = document.getElementById('countdown-bar');
+        const num = document.getElementById('countdown-num');
+        const start = Date.now();
+
+        bar.style.transition = `width ${DURATION}ms linear`;
+        // Kick off the animation on next frame so the transition fires
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => { bar.style.width = '0%'; });
+        });
+
+        const tick = setInterval(() => {
+            const elapsed = Date.now() - start;
+            const remaining = Math.ceil((DURATION - elapsed) / 1000);
+            num.textContent = remaining > 0 ? remaining : 0;
+            if (elapsed >= DURATION) {
+                clearInterval(tick);
+                window.location.href = '/login/?error=no_account';
+            }
+        }, 250);
+    </script>
+
+</body>
+</html>
