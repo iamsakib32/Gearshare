@@ -7,7 +7,7 @@ from .views import (RegisterView, PendingKYCView, ApproveKYCView,
                     SubmitRentalRequestAPIView, ChatHistoryAPIView,
                     UpdateChatPriceAPIView, UserChatListAPIView,
                     SendLoginOTPView, VerifyLoginOTPView, SendResetOTPView, ResetPasswordWithOTPView,
-                    GoogleLoginRedirectView, GoogleAuthCallbackView)
+                    GoogleLoginRedirectView, GoogleAuthCallbackView, AgreeToPriceAPIView, UploadEvidenceAPIView, GetEvidenceAPIView)
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -41,5 +41,8 @@ urlpatterns = [
     path('rental/request/', SubmitRentalRequestAPIView.as_view(), name='api_submit_rental_request'),
     path('rental/<int:request_id>/messages/', ChatHistoryAPIView.as_view(), name='api_chat_history'),
     path('rental/<int:request_id>/update-price/', UpdateChatPriceAPIView.as_view(), name='api_update_chat_price'),
+    path('rental/<int:request_id>/agree-price/', AgreeToPriceAPIView.as_view(), name='api_agree_price'),
+    path('rental/<int:request_id>/upload-evidence/', UploadEvidenceAPIView.as_view(), name='api_upload_evidence'),
     path('chats/<int:user_id>/', UserChatListAPIView.as_view(), name='api_user_chat_list'),
+    path('rental/<int:request_id>/evidence/', GetEvidenceAPIView.as_view(), name='api_get_evidence'),
 ]
