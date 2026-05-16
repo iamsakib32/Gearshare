@@ -3,79 +3,530 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GearShare Rental Contract</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>GearShare Rental Agreement — {{ rental_request.id }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=DM+Mono:wght@400;500&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+
     <style>
-        .contract-box { border: 2px solid #333; padding: 40px; margin-top: 30px; background: #fff; }
-        .signature-section { margin-top: 50px; font-family: 'Cursive', sans-serif; }
-        .divider { border-left: 1px solid #ddd; height: 100%; }
-        @media print { .no-print { display: none; } }
+        /* ── Reset & Base ─────────────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --orange: #f97316;
+            --orange-light: rgba(249,115,22,0.08);
+            --orange-border: rgba(249,115,22,0.25);
+            --ink: #0d0d0d;
+            --ink-2: #2a2a2a;
+            --ink-muted: #555;
+            --ink-faint: #888;
+            --rule: #d4d4d4;
+            --bg: #fafaf8;
+            --paper: #ffffff;
+            --red-text: #b91c1c;
+            --green-text: #15803d;
+        }
+
+        body {
+            font-family: 'EB Garamond', Georgia, serif;
+            background: var(--bg);
+            color: var(--ink);
+            font-size: 15px;
+            line-height: 1.65;
+        }
+
+        /* ── Screen-only wrapper ─────────────────────────────────── */
+        .screen-shell {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        /* ── Top action bar (no-print) ───────────────────────────── */
+        .action-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .action-bar-left { display: flex; align-items: center; gap: 0.75rem; }
+        .back-link {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            font-family: 'DM Mono', monospace; font-size: 0.78rem;
+            color: var(--ink-muted); text-decoration: none;
+            border: 1px solid var(--rule); padding: 0.45rem 1rem;
+            border-radius: 6px; transition: all 0.2s;
+        }
+        .back-link:hover { border-color: var(--orange); color: var(--orange); }
+        .back-link svg { width: 14px; height: 14px; }
+
+        .action-btns { display: flex; gap: 0.6rem; }
+        .btn {
+            font-family: 'DM Mono', monospace; font-size: 0.78rem; font-weight: 500;
+            padding: 0.5rem 1.25rem; border-radius: 6px; cursor: pointer;
+            border: 1px solid transparent; transition: all 0.2s; letter-spacing: 0.02em;
+        }
+        .btn-ghost { background: transparent; border-color: var(--rule); color: var(--ink-muted); }
+        .btn-ghost:hover { border-color: var(--ink-2); color: var(--ink); }
+        .btn-primary { background: var(--orange); color: white; border-color: var(--orange); box-shadow: 0 2px 8px rgba(249,115,22,0.3); }
+        .btn-primary:hover { background: #ea6c0a; box-shadow: 0 4px 16px rgba(249,115,22,0.4); }
+        .btn-success { background: #15803d; color: white; border-color: #15803d; }
+        .btn-success:hover { background: #166534; }
+
+        /* ── The Contract Paper ──────────────────────────────────── */
+        .contract-paper {
+            background: var(--paper);
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 40px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.06);
+            padding: 60px 72px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle watermark stripe on left edge */
+        .contract-paper::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 5px;
+            background: linear-gradient(180deg, var(--orange) 0%, #fb923c 50%, var(--orange) 100%);
+        }
+
+        /* ── Contract Header ─────────────────────────────────────── */
+        .contract-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--ink);
+            margin-bottom: 1.75rem;
+            gap: 1.5rem;
+        }
+
+        .brand-block { display: flex; align-items: center; gap: 0.75rem; }
+        .brand-logo { height: 44px; width: auto; }
+        .brand-name {
+            font-size: 1.5rem; font-weight: 800; line-height: 1;
+            font-family: 'Montserrat', sans-serif; letter-spacing: -0.02em;
+        }
+        .brand-name span { color: var(--orange); }
+        .brand-tagline {
+            font-size: 0.7rem; font-family: 'DM Mono', monospace;
+            color: var(--ink-faint); letter-spacing: 0.08em;
+            text-transform: uppercase; margin-top: 0.2rem;
+        }
+
+        .doc-meta { text-align: right; }
+        .doc-title {
+            font-size: 0.65rem; font-family: 'DM Mono', monospace;
+            text-transform: uppercase; letter-spacing: 0.12em;
+            color: var(--ink-faint); margin-bottom: 0.25rem;
+        }
+        .doc-id {
+            font-family: 'DM Mono', monospace; font-size: 0.85rem;
+            font-weight: 500; color: var(--orange);
+            background: var(--orange-light); border: 1px solid var(--orange-border);
+            padding: 0.2rem 0.65rem; border-radius: 4px; display: inline-block;
+        }
+        .doc-date {
+            font-family: 'DM Mono', monospace; font-size: 0.72rem;
+            color: var(--ink-faint); margin-top: 0.4rem;
+        }
+
+        /* ── Agreement Title ─────────────────────────────────────── */
+        .agreement-title-block {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .agreement-title {
+            font-size: 1.75rem; font-weight: 700; letter-spacing: -0.01em;
+            line-height: 1.2; margin-bottom: 0.4rem;
+        }
+        .agreement-subtitle {
+            font-size: 0.8rem; font-family: 'DM Mono', monospace;
+            color: var(--ink-faint); letter-spacing: 0.08em; text-transform: uppercase;
+        }
+
+        /* ── Parties Grid ────────────────────────────────────────── */
+        .parties-grid {
+            display: grid;
+            grid-template-columns: 1fr 1px 1fr;
+            gap: 0;
+            margin-bottom: 2rem;
+            border: 1px solid var(--rule);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .party-col {
+            padding: 1.5rem 1.75rem;
+        }
+        .party-col.owner { border-right: 1px solid var(--rule); }
+        .party-divider { width: 1px; background: var(--rule); }
+
+        .party-role {
+            font-family: 'DM Mono', monospace; font-size: 0.65rem;
+            text-transform: uppercase; letter-spacing: 0.12em;
+            font-weight: 500; margin-bottom: 0.6rem;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .party-role.owner-role { color: var(--orange); }
+        .party-role.renter-role { color: var(--green-text); }
+        .role-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            display: inline-block; flex-shrink: 0;
+        }
+        .owner-role .role-dot { background: var(--orange); }
+        .renter-role .role-dot { background: var(--green-text); }
+
+        .party-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .party-field {
+            font-size: 0.88rem; color: var(--ink-2); margin-bottom: 0.2rem;
+            display: flex; align-items: baseline; gap: 0.3rem; flex-wrap: wrap;
+        }
+        .party-field strong { color: var(--ink); font-weight: 600; white-space: nowrap; }
+        .party-field .field-val { white-space: nowrap; }
+
+        /* ── Section ─────────────────────────────────────────────── */
+        .section { margin-bottom: 1.75rem; }
+        .section-label {
+            font-family: 'DM Mono', monospace; font-size: 0.65rem;
+            text-transform: uppercase; letter-spacing: 0.14em;
+            color: var(--ink-faint); margin-bottom: 0.75rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .section-label::after {
+            content: ''; flex: 1; height: 1px; background: var(--rule);
+        }
+
+        /* Deal summary strip */
+        .deal-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--rule);
+            border: 1px solid var(--rule);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1.75rem;
+        }
+        .deal-cell {
+            background: var(--paper);
+            padding: 1rem 1.25rem;
+            display: flex; flex-direction: column; gap: 0.25rem;
+        }
+        .deal-cell-label {
+            font-family: 'DM Mono', monospace; font-size: 0.62rem;
+            text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-faint);
+        }
+        .deal-cell-value { font-size: 1.05rem; font-weight: 700; color: var(--ink); }
+        .deal-cell-value.highlight { color: var(--orange); }
+
+        /* Terms list */
+        .terms-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.75rem;
+        }
+        .terms-block { }
+        .terms-block-title {
+            font-size: 0.78rem; font-weight: 700; color: var(--ink-2);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            margin-bottom: 0.6rem; padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--rule);
+        }
+        .terms-list { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+        .terms-list li {
+            font-size: 0.88rem; color: var(--ink-2); line-height: 1.5;
+            padding-left: 1rem; position: relative;
+        }
+        .terms-list li::before {
+            content: '–'; position: absolute; left: 0;
+            color: var(--ink-faint);
+        }
+
+        /* Legal notice */
+        .legal-notice {
+            background: rgba(185,28,28,0.04);
+            border: 1px solid rgba(185,28,28,0.2);
+            border-left: 3px solid var(--red-text);
+            border-radius: 0 6px 6px 0;
+            padding: 1rem 1.25rem;
+            margin-bottom: 2rem;
+        }
+        .legal-notice-title {
+            font-family: 'DM Mono', monospace; font-size: 0.65rem;
+            text-transform: uppercase; letter-spacing: 0.12em;
+            color: var(--red-text); font-weight: 600; margin-bottom: 0.4rem;
+        }
+        .legal-notice p {
+            font-size: 0.82rem; color: var(--ink-2); line-height: 1.6;
+        }
+
+        /* Evidence vault block */
+        .evidence-block {
+            background: var(--orange-light);
+            border: 1px solid var(--orange-border);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 2rem;
+            display: flex; align-items: flex-start; gap: 0.875rem;
+        }
+        .evidence-icon {
+            width: 32px; height: 32px; border-radius: 6px;
+            background: rgba(249,115,22,0.15); flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .evidence-icon svg { width: 16px; height: 16px; color: var(--orange); }
+        .evidence-text-title {
+            font-size: 0.78rem; font-weight: 700; color: var(--ink); margin-bottom: 0.2rem;
+        }
+        .evidence-text-body { font-size: 0.8rem; color: var(--ink-muted); line-height: 1.5; }
+
+        /* Signature section */
+        .signature-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 0.5rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--rule);
+        }
+        .sig-col { }
+        .sig-role {
+            font-family: 'DM Mono', monospace; font-size: 0.62rem;
+            text-transform: uppercase; letter-spacing: 0.12em;
+            color: var(--ink-faint); margin-bottom: 2.5rem;
+        }
+        .sig-line {
+            border-bottom: 1.5px solid var(--ink-2);
+            margin-bottom: 0.5rem;
+            height: 1px;
+        }
+        .sig-name { font-size: 0.9rem; font-weight: 600; color: var(--ink); }
+        .sig-label { font-size: 0.72rem; color: var(--ink-faint); font-family: 'DM Mono', monospace; }
+
+        /* Footer */
+        .contract-footer {
+            margin-top: 2.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--rule);
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 1rem;
+        }
+        .footer-brand {
+            font-family: 'DM Mono', monospace; font-size: 0.65rem;
+            text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-faint);
+        }
+        .footer-brand span { color: var(--orange); }
+        .footer-validity {
+            font-family: 'DM Mono', monospace; font-size: 0.62rem;
+            color: var(--ink-faint); text-align: right;
+        }
+
+        /* ── Print styles ────────────────────────────────────────── */
+        @media print {
+            body { background: white; font-size: 13px; }
+            .screen-shell { padding: 0; max-width: 100%; }
+            .action-bar { display: none !important; }
+            .contract-paper {
+                border: none; box-shadow: none;
+                padding: 48px 56px;
+                page-break-inside: avoid;
+            }
+            .contract-paper::before { display: none; }
+            .deal-strip, .parties-grid, .terms-cols { break-inside: avoid; }
+            .signature-section { break-inside: avoid; margin-top: 3rem; }
+        }
     </style>
 </head>
-<body class="bg-light">
-    <div class="container">
-        <div class="contract-box shadow">
-            <h2 class="text-center mb-4">GearShare Rental Agreement</h2>
-            <hr>
+<body>
 
-            <div class="row mt-4">
-                <div class="col-md-6 px-4">
-                    <h4 class="text-primary">Owner Information</h4>
-                    <p><strong>Name:</strong> {{ owner_name }}</p>
-                    <p><strong>Item:</strong> {{ gear_name }}</p>
-                    <p><strong>Condition:</strong> {{ gear_condition }}</p>
-                    <hr>
-                    <h5>Owner's Terms:</h5>
-                    <ul class="small">
-                        <li>The owner ensures the gear is in "Good" condition.</li>
-                        <li>The owner will provide necessary accessories as mentioned.</li>
-                        <li>Ownership remains with the owner during the rental period.</li>
-                    </ul>
-                </div>
+<div class="screen-shell">
 
-                <div class="col-md-6 px-4 divider">
-                    <h4 class="text-success">Renter Information</h4>
-                    <p><strong>Name:</strong> {{ renter_name }}</p>
-                    <p><strong>Duration:</strong> {{ rental_duration }}</p>
-                    <p><strong>Total Amount:</strong> {{ total_price }} BDT</p>
-                    <hr>
-                    <h5>Renter's Commitments:</h5>
-                    <ul class="small">
-                        <li>Renter is responsible for any physical damage.</li>
-                        <li>Gear must be returned by the agreed end date.</li>
-                        <li>Penalty of {{ penalty_fee }} applies for late returns.</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="row mt-5">
-                <div class="col-12">
-                    <h5 class="text-danger">Legal Notice & Punishment:</h5>
-                    <p class="small text-muted">
-                        Any breach of this agreement (e.g., equipment theft, intentional damage, or non-return) will lead to
-                        immediate account suspension. Under the Digital Security Act and Contract Law of Bangladesh,
-                        the violating party will be liable for a fine of up to {{ penalty_fee }} or legal prosecution.
-                    </p>
-                </div>
-            </div>
-
-            <div class="row signature-section text-center mt-5">
-                <div class="col-6">
-                    <p class="mb-0">__________________________</p>
-                    <p><strong>{{ owner_name }}</strong><br><small>(Digital Signature)</small></p>
-                </div>
-                <div class="col-6">
-                    <p class="mb-0">__________________________</p>
-                    <p><strong>{{ renter_name }}</strong><br><small>(Digital Signature)</small></p>
-                </div>
-            </div>
+    <!-- Action bar — hidden on print -->
+    <div class="action-bar no-print">
+        <div class="action-bar-left">
+            <a href="javascript:history.back()" class="back-link">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                Back
+            </a>
         </div>
-
-        <div class="text-center mt-4 mb-5 no-print">
-            <button class="btn btn-secondary me-2" onclick="window.history.back()">Back</button>
-            <button class="btn btn-primary" onclick="window.print()">Print or Save as PDF</button>
-            <button class="btn btn-success ms-2">Finalize & Confirm Contract</button>
+        <div class="action-btns">
+            <button class="btn btn-ghost" onclick="window.print()">
+                🖨 Print / Save PDF
+            </button>
+            <button id="finalize-btn" class="btn btn-success" onclick="finalizeContract()">
+                ✓ Finalize Contract
+            </button>
         </div>
     </div>
+
+    <!-- The printable contract -->
+    <div class="contract-paper">
+
+        <!-- Header -->
+        <div class="contract-header">
+            <div class="brand-block">
+                <img src="/static/images/GearShare Logo only-Photoroom.png" alt="GearShare" class="brand-logo">
+                <div>
+                    <div class="brand-name">Gear<span>Share</span></div>
+                    <div class="brand-tagline">The Smart Way to Access Tech</div>
+                </div>
+            </div>
+            <div class="doc-meta">
+                <div class="doc-title">Rental Agreement</div>
+                <div class="doc-id">#{{ rental_request.id }}</div>
+                <div class="doc-date">Generated: {{ generated_date }}</div>
+            </div>
+        </div>
+
+        <!-- Agreement title -->
+        <div class="agreement-title-block">
+            <h1 class="agreement-title">GearShare Peer-to-Peer Rental Agreement</h1>
+            <div class="agreement-subtitle">Legally binding between the two parties named below</div>
+        </div>
+
+        <!-- Parties -->
+        <div class="section-label">Parties to this Agreement</div>
+        <div class="parties-grid">
+            <div class="party-col owner">
+                <div class="party-role owner-role"><span class="role-dot"></span>&nbsp;Owner / Lessor</div>
+                <div class="party-name">{{ owner_name }}</div>
+                <div class="party-field"><strong>Item:</strong> <span class="field-val">{{ gear_name }}</span></div>
+                <div class="party-field"><strong>Condition:</strong> <span class="field-val">{{ gear_condition }}</span></div>
+            </div>
+            <div class="party-col">
+                <div class="party-role renter-role"><span class="role-dot"></span>&nbsp;Renter / Lessee</div>
+                <div class="party-name">{{ renter_name }}</div>
+                <div class="party-field"><strong>Rental Duration:</strong> <span class="field-val">{{ rental_duration }}</span></div>
+                <div class="party-field"><strong>Total Payable:</strong> <span class="field-val">{{ total_price }} BDT</span></div>
+            </div>
+        </div>
+
+        <!-- Deal summary -->
+        <div class="section-label">Deal Summary</div>
+        <div class="deal-strip">
+            <div class="deal-cell">
+                <span class="deal-cell-label">Agreed Rate</span>
+                <span class="deal-cell-value highlight">{{ total_price }} BDT</span>
+            </div>
+            <div class="deal-cell">
+                <span class="deal-cell-label">Duration</span>
+                <span class="deal-cell-value">{{ rental_duration }}</span>
+            </div>
+            <div class="deal-cell">
+                <span class="deal-cell-label">Late Return Penalty</span>
+                <span class="deal-cell-value">{{ penalty_fee }} BDT</span>
+            </div>
+        </div>
+
+        <!-- Evidence vault -->
+        <div class="evidence-block">
+            <div class="evidence-icon">
+                <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <div>
+                <div class="evidence-text-title">Live Condition Evidence — Secured in Vault</div>
+                <div class="evidence-text-body">
+                    Before this contract was generated, the owner captured live photographic evidence of the gear's
+                    condition via GearShare's tamper-proof Evidence Vault. These photos are timestamped, locked to
+                    this rental ID, and admissible as proof of the gear's pre-rental state in any dispute.
+                </div>
+            </div>
+        </div>
+
+        <!-- Terms -->
+        <div class="section-label">Terms &amp; Commitments</div>
+        <div class="terms-cols">
+            <div class="terms-block">
+                <div class="terms-block-title">Owner's Obligations</div>
+                <ul class="terms-list">
+                    <li>The gear is provided in the stated condition: <strong>{{ gear_condition }}</strong>.</li>
+                    <li>All necessary accessories as agreed will be included.</li>
+                    <li>Full ownership of the item remains with the owner throughout the rental period.</li>
+                    <li>Owner must be reachable for the duration of the rental for support.</li>
+                </ul>
+            </div>
+            <div class="terms-block">
+                <div class="terms-block-title">Renter's Obligations</div>
+                <ul class="terms-list">
+                    <li>Renter assumes full liability for any physical damage caused during the rental.</li>
+                    <li>Gear must be returned by the agreed end date in the same or better condition.</li>
+                    <li>Late returns incur a penalty of <strong>{{ penalty_fee }} BDT</strong> per day.</li>
+                    <li>Theft, loss, or intentional damage is a criminal offence under Bangladesh law.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Legal notice -->
+        <div class="legal-notice">
+            <div class="legal-notice-title">⚠ Legal Notice &amp; Consequences of Breach</div>
+            <p>
+                Any breach of this agreement — including equipment theft, intentional damage, fraudulent
+                misrepresentation, or failure to return — constitutes a civil and criminal offence under the
+                <strong>Digital Security Act of Bangladesh</strong> and applicable <strong>Contract Law</strong>.
+                The violating party shall be liable for a financial penalty of up to <strong>{{ penalty_fee }} BDT</strong>,
+                immediate permanent suspension from the GearShare platform, and may face legal prosecution.
+                GearShare's Evidence Vault records serve as prima facie evidence in any such proceedings.
+                This document, when printed or saved as PDF, constitutes a legally binding record of this agreement.
+            </p>
+        </div>
+
+        <!-- Signatures -->
+        <div class="section-label">Digital Signatures</div>
+        <div class="signature-section">
+            <div class="sig-col">
+                <div class="sig-role">Owner / Lessor</div>
+                <div class="sig-line"></div>
+                <div class="sig-name">{{ owner_name }}</div>
+                <div class="sig-label">Digital Signature — GearShare Platform</div>
+            </div>
+            <div class="sig-col">
+                <div class="sig-role">Renter / Lessee</div>
+                <div class="sig-line"></div>
+                <div class="sig-name">{{ renter_name }}</div>
+                <div class="sig-label">Digital Signature — GearShare Platform</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="contract-footer">
+            <div class="footer-brand">
+                Gear<span>Share</span> · gearshare.app · Dhaka, Bangladesh
+            </div>
+            <div class="footer-validity">
+                Agreement ID: {{ rental_request.id }}<br>
+                This document is valid as evidence if printed or saved as PDF.
+            </div>
+        </div>
+
+    </div><!-- end .contract-paper -->
+
+</div><!-- end .screen-shell -->
+
+
+    <script>
+        // ── HIDE FINALIZE BUTTON FROM OWNER ──
+        const currentUserId = localStorage.getItem('gearshare_user_id');
+        const ownerId = "{{ rental_request.owner.id }}";
+
+        if (String(currentUserId) === String(ownerId)) {
+            const finalizeBtn = document.getElementById('finalize-btn');
+            if (finalizeBtn) finalizeBtn.style.display = 'none';
+        }
+
+        // ── FINALIZE CONTRACT (RENTER ONLY) ──
+        function finalizeContract() {
+            const parts = window.location.pathname.replace(/\/+$/, '').split('/');
+            const requestId = parts[parts.length - 1];
+            if (requestId) {
+                localStorage.setItem('contract_finalized_' + requestId, 'true');
+            }
+            alert('Contract finalized and confirmed.');
+            // Send them back to the chat so the "Proceed to Checkout" button appears!
+            window.history.back();
+        }
+    </script>
 </body>
 </html>
