@@ -492,6 +492,93 @@ class UpdateChatPriceAPIView(APIView):
         return Response({"message": "Discount offered successfully!"}, status=status.HTTP_200_OK)
 
 
+class AgreeToPriceAPIView(APIView):
+    def post(self, request, request_id):
+        rental_req = get_object_or_404(RentalRequest, id=request_id)
+        user_id = request.data.get('user_id')
+
+        if str(rental_req.renter.id) != str(user_id):
+            return Response({"error": "Unauthorized."}, status=status.HTTP_403_FORBIDDEN)
+
+        rental_req.renter_agreed_price = True
+        rental_req.save()
+
+        # Send live notification to owner
+        system_text = "System Update: The renter has agreed to the negotiated price. Please upload live camera evidence to proceed to the contract."
+        msg = ChatMessage.objects.create(
+            rental_request=rental_req,
+            sender=rental_req.renter,
+            text=system_text,
+            is_system_update=True
+        )
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'chat_{request_id}',
+            {
+                'type': 'chat_message',
+                'message': system_text,
+                'sender_id': rental_req.renter.id,
+                'is_system_update': True,
+                'timestamp': localtime(msg.created_at).strftime("%I:%M %p")
+            }
+        )
+
+        return Response({"message": "Agreed to price!"}, status=status.HTTP_200_OK)
+
+
+class UploadEvidenceAPIView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request, request_id):
+        rental_req = get_object_or_404(RentalRequest, id=request_id)
+        user_id = request.data.get('user_id')
+
+        if str(rental_req.owner.id) != str(user_id):
+            return Response({"error": "Unauthorized. Only the owner can upload evidence."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        # Catch the live camera photos
+        images = request.FILES.getlist('evidence_images')
+
+        if not images or len(images) < 1:
+            return Response({"error": "Please capture at least 1 live photo."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(images) > 4:
+            return Response({"error": "Maximum 4 photos allowed."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Save to Evidence Vault in Supabase
+        from .models import RentalEvidence
+        for img in images:
+            RentalEvidence.objects.create(rental_request=rental_req, image=img)
+
+        rental_req.evidence_uploaded = True
+        rental_req.save()
+
+        # Send live notification to renter unlocking the contract
+        system_text = "System Update: The owner has uploaded the live condition evidence. The Digital Contract is now unlocked."
+        msg = ChatMessage.objects.create(
+            rental_request=rental_req,
+            sender=rental_req.owner,
+            text=system_text,
+            is_system_update=True
+        )
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'chat_{request_id}',
+            {
+                'type': 'chat_message',
+                'message': system_text,
+                'sender_id': rental_req.owner.id,
+                'is_system_update': True,
+                'timestamp': localtime(msg.created_at).strftime("%I:%M %p"),
+                'contract_unlocked': True
+            }
+        )
+
+        return Response({"message": "Evidence uploaded successfully!"}, status=status.HTTP_200_OK)
+
+
 class UserChatListAPIView(APIView):
     def get(self, request, user_id):
         user = get_object_or_404(CustomUser, id=user_id)
@@ -789,3 +876,37 @@ class GoogleAuthCallbackView(APIView):
         </html>
         """
         return HttpResponse(html)
+
+
+class GetEvidenceAPIView(APIView):
+    def get(self, request, request_id):
+        user_id = request.query_params.get('user_id')
+        rental_req = get_object_or_404(RentalRequest, id=request_id)
+
+        if str(rental_req.renter.id) != str(user_id) and str(rental_req.owner.id) != str(user_id):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        from .models import RentalEvidence
+        evidence = RentalEvidence.objects.filter(rental_request=rental_req)
+        urls = [e.image.url for e in evidence if e.image]
+        return Response({"images": urls}, status=status.HTTP_200_OK)
+
+
+def rental_contract_page(request, request_id):
+    rental_req = get_object_or_404(RentalRequest, id=request_id)
+
+    # Get actual names (fallback to username if they didn't provide a first name via Google)
+    owner_name = f"{rental_req.owner.first_name} {rental_req.owner.last_name}".strip() or rental_req.owner.username
+    renter_name = f"{rental_req.renter.first_name} {rental_req.renter.last_name}".strip() or rental_req.renter.username
+
+    context = {
+        'rental_request': rental_req,
+        'owner_name': owner_name,
+        'renter_name': renter_name,
+        'gear_name': rental_req.gear.title,
+        'gear_condition': rental_req.gear.condition,
+        'rental_duration': rental_req.gear.min_rental_duration,
+        'total_price': rental_req.negotiated_price or rental_req.gear.price_per_day,
+        'penalty_fee': rental_req.gear.replacement_value,
+    }
+    return render(request, 'rental_contract.html', context)

@@ -30,6 +30,7 @@ class CustomUser(AbstractUser):
 
     can_switch_role = models.BooleanField(default=False)
     role_status_msg = models.CharField(max_length=255, blank=True, null=True)
+
     # --- AUTHENTICATION & SECURITY FIELDS ---
     google_id = models.CharField(max_length=200, blank=True, null=True, unique=True)
     auth_provider = models.CharField(max_length=50, default='email', null=True, blank=True)
@@ -116,11 +117,25 @@ class RentalRequest(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     negotiated_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
+    # --- NEW EVIDENCE VAULT FIELDS ---
+    renter_agreed_price = models.BooleanField(default=False)
+    evidence_uploaded = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Request: {self.renter.username} -> {self.gear.title}"
+
+
+# --- NEW MODEL: THE EVIDENCE VAULT ---
+class RentalEvidence(models.Model):
+    rental_request = models.ForeignKey(RentalRequest, on_delete=models.CASCADE, related_name='evidence_photos')
+    image = models.ImageField(upload_to='evidence_vault/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Evidence for Req #{self.rental_request.id}"
 
 
 class ChatMessage(models.Model):

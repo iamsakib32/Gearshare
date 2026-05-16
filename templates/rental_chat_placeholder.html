@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GearShare | Request & Negotiation</title>
+    <title>GearShare | Negotiation & Evidence Vault</title>
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
 
     <script>
@@ -14,85 +14,163 @@
     </script>
 
     <style>
+        /* ── Layout ─────────────────────────────────────────────── */
         .page-wrapper { min-height: 100vh; padding: 4rem 1.5rem; position: relative; z-index: 10; max-width: 80rem; margin: 0 auto; }
-
         .chat-layout { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-top: 1rem; align-items: start; height: calc(100vh - 10rem); }
-        @media (min-width: 992px) { .chat-layout { grid-template-columns: 350px 1fr; } }
+        @media (min-width: 992px) { .chat-layout { grid-template-columns: 340px 1fr; } }
 
-        /* Context Sidebar */
-        .context-panel { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border); padding: 2rem; border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 1.5rem; }
+        /* ── Back button ─────────────────────────────────────────── */
+        .back-btn { background: none; border: 1px solid transparent; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; font-weight: 600; font-size: 0.95rem; transition: color 0.2s, border-color 0.2s, background 0.2s; padding: 0.4rem 0.85rem 0.4rem 0.6rem; border-radius: 9999px; }
+        .back-btn:hover { color: var(--text-main); background: rgba(128,128,128,0.1); border-color: var(--glass-border); }
+        .back-btn svg { width: 1.1rem; height: 1.1rem; }
 
-        .status-badge { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1.25rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; width: fit-content; }
+        /* ── Context panel ───────────────────────────────────────── */
+        .context-panel { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border); padding: 1.75rem; border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 1.25rem; overflow-y: auto; max-height: calc(100vh - 10rem); scrollbar-width: none; }
+        .context-panel::-webkit-scrollbar { display: none; }
+
+        .status-badge { display: inline-flex; align-items: center; justify-content: center; padding: 0.4rem 1rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; width: fit-content; }
         .status-Pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
         .status-Approved { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
 
-        .context-img { width: 100%; height: 200px; border-radius: 1rem; object-fit: cover; background: rgba(0,0,0,0.2); }
+        .context-img { width: 100%; height: 180px; border-radius: 1rem; object-fit: cover; background: rgba(0,0,0,0.2); }
+        .context-details { display: flex; flex-direction: column; gap: 0.4rem; }
+        .context-title { font-size: 1.35rem; font-weight: 900; color: var(--text-main); margin: 0; line-height: 1.2; }
+        .context-price { font-size: 1.2rem; font-weight: bold; color: var(--orange-primary); transition: color 0.3s; }
 
-        .context-details { display: flex; flex-direction: column; gap: 0.5rem; }
-        .context-title { font-size: 1.5rem; font-weight: 900; color: var(--text-main); margin: 0; line-height: 1.2; }
-        .context-price { font-size: 1.25rem; font-weight: bold; color: var(--orange-primary); transition: color 0.3s; }
+        /* ── Participants row ────────────────────────────────────── */
+        .participants-row { display: flex; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid rgba(128,128,128,0.15); }
+        .participant-card { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 0.75rem 0.5rem; border-radius: 0.875rem; background: rgba(128,128,128,0.05); border: 1px solid rgba(128,128,128,0.1); text-align: center; }
+        .avatar-circle { width: 36px; height: 36px; border-radius: 50%; background: var(--orange-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; flex-shrink: 0; }
+        .user-role { font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.06em; }
+        .username { font-size: 0.8rem; color: var(--text-main); font-weight: 600; }
 
-        .user-block { display: flex; align-items: center; gap: 1rem; padding-top: 1rem; border-top: 1px solid rgba(128,128,128,0.2); }
-        .avatar-circle { width: 40px; height: 40px; border-radius: 50%; background: var(--orange-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; flex-shrink: 0; }
-        .user-names { display: flex; flex-direction: column; }
-        .user-role { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.05em; }
-        .username { font-size: 0.95rem; color: var(--text-main); font-weight: 600; }
+        /* ── Action boxes ────────────────────────────────────────── */
+        .action-box { border-radius: 1rem; padding: 1.125rem; display: none; flex-direction: column; gap: 0.75rem; }
+        /* Neutral (price negotiation) */
+        .action-box.ab-neutral { background: rgba(128,128,128,0.06); border: 1px solid rgba(128,128,128,0.15); }
+        html.dark .action-box.ab-neutral { background: rgba(255,255,255,0.04); }
+        /* Green (camera / vault secured) */
+        .action-box.ab-green { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.2); }
+        /* Red (classified evidence) */
+        .action-box.ab-red { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); }
+        /* Renter agree */
+        .action-box.ab-orange { background: rgba(249,115,22,0.06); border: 1px solid rgba(249,115,22,0.2); }
 
-        /* Chat Panel */
+        .ab-label { font-size: 0.7rem; text-transform: uppercase; font-weight: 800; letter-spacing: 0.08em; margin: 0; }
+        .ab-label.orange { color: var(--orange-primary); }
+        .ab-label.green  { color: #10b981; }
+        .ab-label.red    { color: #ef4444; }
+        .ab-desc { font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.45; }
+
+        /* Price input row */
+        .price-input-row { display: flex; gap: 0.5rem; align-items: center; }
+        .price-input-row input { flex: 1; min-width: 0; padding: 0.6rem 0.875rem; border-radius: 0.625rem; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-main); font-family: inherit; font-size: 0.88rem; outline: none; transition: border-color 0.2s; }
+        .price-input-row input:focus { border-color: var(--orange-primary); }
+        .price-input-row input::placeholder { font-size: 0.82rem; opacity: 0.7; }
+        .price-input-row button { flex-shrink: 0; font-size: 0.82rem !important; padding: 0.6rem 0.9rem !important; }
+        input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+
+        /* Generic action button inside action boxes */
+        .ab-btn { width: 100%; padding: 0.7rem 1rem; font-weight: 700; border-radius: 0.625rem; border: none; cursor: pointer; font-size: 0.9rem; transition: opacity 0.2s, transform 0.15s; font-family: inherit; }
+        .ab-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+        .ab-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+        .ab-btn.orange { background: var(--orange-primary); color: white; box-shadow: 0 4px 12px -3px rgba(249,115,22,0.35); }
+        .ab-btn.green  { background: #10b981; color: white; box-shadow: 0 4px 12px -3px rgba(16,185,129,0.35); }
+        .ab-btn.outline-red { background: transparent; color: #ef4444; border: 1.5px solid #ef4444; }
+        .ab-btn.outline-red:hover:not(:disabled) { background: rgba(239,68,68,0.08); }
+        .ab-btn.outline-subtle { background: transparent; color: var(--text-main); border: 1.5px solid rgba(128,128,128,0.35); }
+        .ab-btn.outline-subtle:hover:not(:disabled) { background: rgba(128,128,128,0.08); }
+
+        /* ── Camera ──────────────────────────────────────────────── */
+        .camera-wrapper { position: relative; width: 100%; border-radius: 0.75rem; overflow: hidden; background: #000; border: 1px solid var(--glass-border); }
+        #camera-stream { width: 100%; display: block; }
+
+        .camera-actions { display: flex; gap: 0.5rem; }
+        .camera-actions .ab-btn { flex: 1; }
+
+        .photo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; }
+        .photo-thumb { width: 100%; aspect-ratio: 1/1; border-radius: 0.4rem; object-fit: cover; border: 1.5px solid var(--orange-primary); }
+
+        /* ── Chat panel ──────────────────────────────────────────── */
         .chat-panel { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); display: flex; flex-direction: column; height: 100%; overflow: hidden; }
-
-        .chat-header { padding: 1.5rem 2rem; border-bottom: 1px solid rgba(128,128,128,0.2); font-weight: bold; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); }
+        .chat-header { padding: 1.25rem 1.75rem; border-bottom: 1px solid rgba(128,128,128,0.2); color: var(--text-main); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); gap: 1rem; }
         html.dark .chat-header { background: rgba(255,255,255,0.02); }
+        .chat-header-title { font-weight: 800; font-size: 1rem; }
+        .chat-header-pill { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); padding: 0.3rem 0.75rem; border-radius: 9999px; white-space: nowrap; }
+        .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #10b981; flex-shrink: 0; animation: pulse-dot 2s ease-in-out infinite; }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* Sleek custom scrollbar for the chat area */
-        .chat-messages { flex: 1; padding: 2rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; scrollbar-width: thin; scrollbar-color: rgba(128, 128, 128, 0.3) transparent; }
+        .chat-messages { flex: 1; padding: 1.75rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; scrollbar-width: thin; scrollbar-color: rgba(128, 128, 128, 0.3) transparent; }
         .chat-messages::-webkit-scrollbar { width: 6px; }
         .chat-messages::-webkit-scrollbar-track { background: transparent; }
         .chat-messages::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 10px; }
-        .chat-messages::-webkit-scrollbar-thumb:hover { background: rgba(249, 115, 22, 0.5); }
 
         .msg-wrapper { display: flex; width: 100%; }
         .msg-wrapper.sent { justify-content: flex-end; }
         .msg-wrapper.received { justify-content: flex-start; }
-        .msg-wrapper.system { justify-content: center; width: 100%; margin: 1rem 0; }
-
-        .msg-bubble { max-width: 70%; padding: 1rem 1.25rem; border-radius: 1.25rem; font-size: 0.95rem; line-height: 1.5; position: relative; }
+        .msg-wrapper.system { justify-content: center; width: 100%; margin: 0.75rem 0; }
+        .msg-bubble { max-width: 70%; padding: 0.875rem 1.125rem; border-radius: 1.25rem; font-size: 0.92rem; line-height: 1.55; position: relative; }
         .sent .msg-bubble { background: var(--orange-primary); color: white; border-bottom-right-radius: 0.25rem; box-shadow: 0 4px 15px -3px rgba(249,115,22,0.3); }
         .received .msg-bubble { background: rgba(0,0,0,0.05); color: var(--text-main); border: 1px solid var(--glass-border); border-bottom-left-radius: 0.25rem; }
         html.dark .received .msg-bubble { background: rgba(255,255,255,0.05); }
-
-        .system .msg-bubble { background: rgba(249,115,22,0.1); color: var(--orange-primary); border: 1px solid rgba(249,115,22,0.3); font-weight: bold; text-align: center; border-radius: 1rem; max-width: 90%; font-size: 0.85rem; }
-
-        .msg-time { font-size: 0.7rem; color: rgba(255,255,255,0.7); margin-top: 0.25rem; text-align: right; }
+        .system .msg-bubble { background: rgba(249,115,22,0.08); color: var(--orange-primary); border: 1px solid rgba(249,115,22,0.25); font-weight: 700; text-align: center; border-radius: 0.875rem; max-width: 88%; font-size: 0.82rem; padding: 0.6rem 1rem; }
+        .msg-time { font-size: 0.68rem; color: rgba(255,255,255,0.65); margin-top: 0.3rem; text-align: right; }
         .received .msg-time { color: var(--text-muted); text-align: left; }
-        .system .msg-time { color: var(--orange-primary); opacity: 0.7; text-align: center; }
+        .system .msg-time { color: var(--orange-primary); opacity: 0.6; text-align: center; }
 
-        .chat-input-area { padding: 1.5rem 2rem; border-top: 1px solid rgba(128,128,128,0.2); display: flex; gap: 1rem; background: rgba(0,0,0,0.02); }
+        /* ── Chat input area ─────────────────────────────────────── */
+        .chat-input-area { padding: 1.25rem 1.5rem; border-top: 1px solid rgba(128,128,128,0.2); display: flex; gap: 0.75rem; align-items: center; background: rgba(0,0,0,0.02); }
         html.dark .chat-input-area { background: rgba(255,255,255,0.02); }
-
-        .chat-input { flex: 1; padding: 1rem 1.5rem; border-radius: 9999px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-main); font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+        .chat-input { flex: 1; padding: 0.875rem 1.25rem; border-radius: 9999px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-main); font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
         .chat-input:focus { border-color: var(--orange-primary); }
 
-        input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type="number"] { -moz-appearance: textfield; }
+        .send-btn { background: var(--orange-primary); color: white; border: none; width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px -3px rgba(249,115,22,0.4); }
+        .send-btn:hover { transform: scale(1.07); box-shadow: 0 6px 20px -3px rgba(249,115,22,0.5); }
+        .send-btn svg { width: 1.15rem; height: 1.15rem; transform: translateX(2px); }
 
-        .send-btn { background: var(--orange-primary); color: white; border: none; width: 3.25rem; height: 3.25rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px -3px rgba(249,115,22,0.4); }
-        .send-btn:hover { transform: scale(1.05); }
-        .send-btn svg { width: 1.25rem; height: 1.25rem; transform: translateX(2px); }
+        /* ── Empty chat state ────────────────────────────────────── */
+        .chat-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 1rem; padding: 2rem; text-align: center; user-select: none; pointer-events: none; }
+        .chat-empty-icon { width: 56px; height: 56px; border-radius: 50%; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); display: flex; align-items: center; justify-content: center; }
+        .chat-empty-icon svg { width: 26px; height: 26px; color: var(--orange-primary); }
+        .chat-empty-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0; }
+        .chat-empty-sub { font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.5; max-width: 220px; }
+        .chat-empty-tips { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.25rem; }
+        .chat-empty-tip { font-size: 0.75rem; color: var(--text-muted); background: rgba(128,128,128,0.07); border: 1px solid rgba(128,128,128,0.12); border-radius: 9999px; padding: 0.3rem 0.875rem; }
+        .evidence-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
+        .evidence-overlay.show { display: flex; opacity: 1; }
+        .evidence-container { width: 100%; max-width: 580px; padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+        .evidence-display-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .evidence-display-grid img { width: 100%; border-radius: 0.5rem; border: 2px solid #ef4444; }
     </style>
 </head>
 <body>
     <div class="glow-orb orb-1" style="width: 500px; height: 500px; top: 0; right: 0;"></div>
     <div class="glow-orb orb-2" style="width: 600px; height: 600px; bottom: 0; left: -100px;"></div>
 
+    <div id="evidence-modal" class="evidence-overlay">
+        <div class="evidence-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; color: #ef4444; font-weight: 900; letter-spacing: 0.1em; font-size: 1.2rem;">
+                <span>⚠️ CLASSIFIED EVIDENCE</span>
+                <span style="font-size: 0.8rem; background: rgba(239, 68, 68, 0.2); padding: 0.25rem 0.75rem; border-radius: 999px;">1-TIME VIEW</span>
+            </div>
+
+            <div id="evidence-display-grid" class="evidence-display-grid"></div>
+
+            <p style="color: white; text-align: center; font-size: 0.85rem; margin: 0;">Once you close this window, the photos will be locked in the vault and cannot be viewed again.</p>
+
+            <button onclick="burnEvidenceAndUnlock()" class="btn-orange w-full heading" style="padding: 1rem; font-size: 1.1rem; border-radius: 0.75rem;">I Have Verified the Condition</button>
+        </div>
+    </div>
+
     <div class="page-wrapper">
-        <button onclick="window.location.href='/dashboard/'" style="background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; font-weight: bold; font-size: 1rem; transition: color 0.2s;">
-            <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        <button onclick="window.location.href='/dashboard/'" class="back-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Back to Dashboard
         </button>
 
         <div class="chat-layout">
-
             <div class="context-panel">
                 <div>
                     <div class="status-badge status-{{ rental_request.status }}">
@@ -118,26 +196,60 @@
                     </div>
                 </div>
 
-                <div id="owner-controls" style="display: none; padding-top: 1rem; border-top: 1px solid rgba(128,128,128,0.2);">
-                    <p style="font-size: 0.75rem; text-transform: uppercase; color: var(--orange-primary); font-weight: 800; margin-bottom: 0.5rem;">Owner Controls</p>
-                    <label style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; display: block;">Offer Discounted Rate (৳)</label>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <input type="number" id="new-price-input" class="chat-input" style="border-radius: 0.5rem; padding: 0.5rem 1rem;" placeholder="New Price">
-                        <button id="update-price-btn" onclick="updateNegotiatedPrice()" class="btn-orange" style="border-radius: 0.5rem; padding: 0.5rem 1rem; font-weight: bold; white-space: nowrap;">Update</button>
+                <div id="owner-price-controls" class="action-box ab-neutral">
+                    <p class="ab-label orange">Set Deal Price</p>
+                    <div class="price-input-row">
+                        <input type="number" id="new-price-input" placeholder="New Price (৳)">
+                        <button id="update-price-btn" onclick="updateNegotiatedPrice()" class="ab-btn orange" style="width: auto; padding: 0.6rem 1.1rem; white-space: nowrap;">Send Offer</button>
                     </div>
                 </div>
 
-                <div class="user-block">
-                    <div class="avatar-circle">{{ rental_request.owner.username|make_list|first|upper }}</div>
-                    <div class="user-names">
+                <div id="renter-agreement-box" class="action-box ab-orange">
+                    <p class="ab-label orange">Price Offer Received</p>
+                    <p class="ab-desc">Owner has set a final price. By agreeing, you lock in this rate and prompt the owner for evidence.</p>
+                    <button id="agree-price-btn" onclick="renterAgreeToPrice()" class="ab-btn orange">Accept &amp; Agree to Price</button>
+                </div>
+
+                <div id="owner-camera-box" class="action-box ab-green">
+                    <p class="ab-label green">Live Evidence Required</p>
+                    <p class="ab-desc">Renter agreed. Capture 1–4 live photos of the gear's current condition to unlock the contract.</p>
+
+                    <div class="camera-wrapper">
+                        <video id="camera-stream" autoplay playsinline></video>
+                        <canvas id="photo-canvas" style="display:none;"></canvas>
+                    </div>
+
+                    <div class="camera-actions">
+                        <button id="capture-btn" onclick="capturePhoto()" class="ab-btn outline-subtle" style="display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            Take Photo
+                        </button>
+                        <button id="upload-vault-btn" onclick="uploadEvidenceToVault()" class="ab-btn orange" disabled>Upload to Vault</button>
+                    </div>
+
+                    <div id="photo-preview-grid" class="photo-grid"></div>
+                </div>
+
+                <div id="renter-view-evidence-box" class="action-box ab-red">
+                    <p class="ab-label red">⚠️ Classified Evidence</p>
+                    <p class="ab-desc">Owner uploaded live condition photos. You can only view this <strong>once</strong> before signing.</p>
+                    <button onclick="fetchAndDisplayEvidence()" class="ab-btn outline-red">👁️ View Classified Evidence</button>
+                </div>
+
+                <div id="contract-unlocked-box" class="action-box ab-green">
+                    <p style="font-size: 0.82rem; color: #10b981; font-weight: 700; margin: 0; text-align: center;">✅ Evidence Vault Secured</p>
+                    <button onclick="window.location.href='/rental-contract/{{ rental_request.id }}/'" class="ab-btn green" style="font-size: 1rem;">📝 View Digital Contract</button>
+                    <button id="checkout-btn" onclick="window.location.href='/checkout/{{ rental_request.id }}/'" class="ab-btn orange" style="font-size: 1rem; display: none; margin-top: 0.25rem;">🛒 Proceed to Checkout</button>
+                </div>
+
+                <div class="participants-row">
+                    <div class="participant-card">
+                        <div class="avatar-circle">{{ rental_request.owner.username|make_list|first|upper }}</div>
                         <span class="user-role">Owner</span>
                         <span class="username">@{{ rental_request.owner.username }}</span>
                     </div>
-                </div>
-
-                <div class="user-block" style="padding-top: 0; border-top: none;">
-                    <div class="avatar-circle" style="background: var(--text-muted);">{{ rental_request.renter.username|make_list|first|upper }}</div>
-                    <div class="user-names">
+                    <div class="participant-card">
+                        <div class="avatar-circle" style="background: var(--text-muted);">{{ rental_request.renter.username|make_list|first|upper }}</div>
                         <span class="user-role">Renter</span>
                         <span class="username">@{{ rental_request.renter.username }}</span>
                     </div>
@@ -146,16 +258,26 @@
 
             <div class="chat-panel">
                 <div class="chat-header">
-                    <div>Negotiation Room</div>
-                    <div style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
-                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                    <div class="chat-header-title">Negotiation Room</div>
+                    <div class="chat-header-pill">
+                        <span class="live-dot"></span>
                         Live Connection
                     </div>
                 </div>
-
                 <div class="chat-messages" id="chat-messages">
+                    <div class="chat-empty-state" id="chat-empty-state">
+                        <div class="chat-empty-icon">
+                            <svg fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        </div>
+                        <p class="chat-empty-title">Start the negotiation</p>
+                        <p class="chat-empty-sub">No messages yet. Break the ice — ask about the gear, propose a price, or just say hi!</p>
+                        <div class="chat-empty-tips">
+                            <span class="chat-empty-tip">💬 "Is the gear still available?"</span>
+                            <span class="chat-empty-tip">💰 "Can you do a better rate?"</span>
+                            <span class="chat-empty-tip">📅 "What dates work for you?"</span>
+                        </div>
                     </div>
-
+                </div>
                 <div class="chat-input-area">
                     <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeypress="handleKeyPress(event)">
                     <button class="send-btn" onclick="sendMessage()">
@@ -176,140 +298,275 @@
         const ownerId = "{{ rental_request.owner.id }}";
         const pricePeriod = "{{ rental_request.gear.price_period }}";
 
+        let hasRenterAgreed = "{{ rental_request.renter_agreed_price|yesno:'true,false' }}" === "true";
+        let isEvidenceUploaded = "{{ rental_request.evidence_uploaded|yesno:'true,false' }}" === "true";
+        let isPriceNegotiated = "{{ rental_request.negotiated_price|default_if_none:'false' }}" !== "false";
+
+        // Check if Renter already viewed the evidence
+        let hasViewedEvidenceLocally = localStorage.getItem('evidence_viewed_' + requestId) === 'true';
+
         if (!currentUserId) window.location.href = '/login/';
+        const isOwner = String(currentUserId) === String(ownerId);
 
-        // --- SECURITY LOGIC: Reveal Owner Controls ---
-        if (String(currentUserId) === String(ownerId)) {
-            document.getElementById('owner-controls').style.display = 'block';
+        // --- 🔒 BULLETPROOF UI STATE MANAGER ---
+        function updateSecurityUI() {
+            // Safe DOM extraction
+            const pControls = document.getElementById('owner-price-controls');
+            const rAgree = document.getElementById('renter-agreement-box');
+            const oCam = document.getElementById('owner-camera-box');
+            const rView = document.getElementById('renter-view-evidence-box');
+            const cUnlock = document.getElementById('contract-unlocked-box');
+
+            if(pControls) pControls.style.display = 'none';
+            if(rAgree) rAgree.style.display = 'none';
+            if(oCam) oCam.style.display = 'none';
+            if(rView) rView.style.display = 'none';
+            if(cUnlock) cUnlock.style.display = 'none';
+
+            if (isEvidenceUploaded) {
+                stopCamera();
+                if (isOwner) {
+                    if(cUnlock) cUnlock.style.display = 'flex';
+                } else {
+                    if (hasViewedEvidenceLocally) {
+                        if(cUnlock) cUnlock.style.display = 'flex';
+                    } else {
+                        if(rView) rView.style.display = 'flex';
+                    }
+                }
+            } else if (hasRenterAgreed) {
+                if (isOwner) {
+                    if(oCam) oCam.style.display = 'flex';
+                    startCamera();
+                }
+            } else {
+                if (isOwner) if(pControls) pControls.style.display = 'flex';
+                if (!isOwner && isPriceNegotiated) if(rAgree) rAgree.style.display = 'flex';
+            }
         }
 
-        function scrollToBottom() {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
+        updateSecurityUI();
 
-        // --- 1. LOAD CHAT HISTORY (passes user_id so backend marks messages as read) ---
+        // --- 🛒 CHECKOUT BUTTON LOGIC ---
+        // Shows only for the renter, after they finalize the contract on the contract page.
+        // The contract page must set: localStorage.setItem('contract_finalized_' + requestId, 'true')
+        function refreshCheckoutBtn() {
+            const btn = document.getElementById('checkout-btn');
+            if (!btn) return;
+            const finalized = localStorage.getItem('contract_finalized_' + requestId) === 'true';
+            btn.style.display = (!isOwner && finalized) ? 'block' : 'none';
+        }
+        refreshCheckoutBtn();
+
+        // Re-check when tab regains focus — renter may be returning from the contract page
+        window.addEventListener('focus', refreshCheckoutBtn);
+
+        // --- 📡 WEBSOCKET CHAT LOGIC ---
+        function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
+
         async function loadHistory() {
             try {
                 const response = await fetch(`/api/users/rental/${requestId}/messages/?user_id=${currentUserId}`);
                 const messages = await response.json();
-
-                chatMessages.innerHTML = ''; // Clear box
-
-                messages.forEach(msg => {
-                    appendMessageToUI(msg.text, msg.timestamp, String(msg.sender_id) === String(currentUserId), msg.is_system_update);
-                });
-
-                scrollToBottom();
-            } catch (err) {
-                console.error("Failed to load chat history", err);
-            }
+                chatMessages.innerHTML = '';
+                if (messages.length > 0) {
+                    const emptyState = document.getElementById('chat-empty-state');
+                    if (emptyState) emptyState.remove();
+                    messages.forEach(msg => appendMessageToUI(msg.text, msg.timestamp, String(msg.sender_id) === String(currentUserId), msg.is_system_update));
+                    scrollToBottom();
+                } else {
+                    // Re-insert empty state since innerHTML was cleared
+                    chatMessages.innerHTML = `
+                        <div class="chat-empty-state" id="chat-empty-state">
+                            <div class="chat-empty-icon">
+                                <svg fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            </div>
+                            <p class="chat-empty-title">Start the negotiation</p>
+                            <p class="chat-empty-sub">No messages yet. Break the ice — ask about the gear, propose a price, or just say hi!</p>
+                            <div class="chat-empty-tips">
+                                <span class="chat-empty-tip">💬 "Is the gear still available?"</span>
+                                <span class="chat-empty-tip">💰 "Can you do a better rate?"</span>
+                                <span class="chat-empty-tip">📅 "What dates work for you?"</span>
+                            </div>
+                        </div>`;
+                }
+            } catch (err) {}
         }
 
-        // --- 2. CONNECT TO WEBSOCKETS ---
         const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
         const chatSocket = new WebSocket(`${wsProtocol}${window.location.host}/ws/chat/${requestId}/`);
-
-        chatSocket.onopen = function(e) { console.log("🔥 Engine Connected"); };
 
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
             const isMe = String(data.sender_id) === String(currentUserId);
-
             appendMessageToUI(data.message, data.timestamp, isMe, data.is_system_update);
             scrollToBottom();
 
-            // If the message is from the OTHER person and we're actively on the page, mark it read
-            if (!isMe) {
-                fetch(`/api/users/rental/${requestId}/messages/?user_id=${currentUserId}`).catch(() => {});
-            }
+            // ── State transitions — apply for BOTH sides ──────────
 
-            // REAL-TIME UI MAGIC! Instantly update the DOM price.
+            // 1. Owner sent a new price offer → renter should see agree box
             if (data.new_price) {
+                isPriceNegotiated = true;
                 const priceDisplay = document.getElementById('current-price-display');
                 priceDisplay.innerHTML = `৳${data.new_price} <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: normal;">/ ${pricePeriod}</span>`;
-
-                // Flash the price orange to draw the user's eye to the change
                 priceDisplay.style.color = 'var(--text-main)';
                 setTimeout(() => { priceDisplay.style.color = 'var(--orange-primary)'; }, 300);
+                updateSecurityUI();
+            }
+
+            // 2. Renter agreed to price → owner should see camera box, renter's agree box hides
+            if (data.renter_agreed || (data.is_system_update && data.message && data.message.includes("agreed to the negotiated price"))) {
+                hasRenterAgreed = true;
+                updateSecurityUI();
+            }
+
+            // 3. Evidence uploaded → renter should see "View Evidence" box, owner sees "Vault Secured"
+            if (data.contract_unlocked || data.evidence_uploaded || (data.is_system_update && data.message && data.message.includes("uploaded the live condition evidence"))) {
+                isEvidenceUploaded = true;
+                updateSecurityUI();
             }
         };
 
-        chatSocket.onclose = function(e) { console.error('Socket closed'); };
-
-        // --- 3. SEND REGULAR MESSAGES ---
         function handleKeyPress(e) { if (e.key === 'Enter') sendMessage(); }
-
         function sendMessage() {
             const text = chatInput.value.trim();
             if (!text) return;
-
-            chatSocket.send(JSON.stringify({
-                'message': text,
-                'sender_id': currentUserId
-            }));
+            chatSocket.send(JSON.stringify({ 'message': text, 'sender_id': currentUserId }));
             chatInput.value = '';
         }
 
-        // --- 4. OWNER UPDATE PRICE API ---
+        function appendMessageToUI(text, timestamp, isMe, isSystem = false) {
+            // Remove empty state on first real message
+            const emptyState = document.getElementById('chat-empty-state');
+            if (emptyState) emptyState.remove();
+
+            let msgHTML = '';
+            if (isSystem) { msgHTML = `<div class="msg-wrapper system"><div class="msg-bubble">${text}<div class="msg-time">${timestamp}</div></div></div>`; }
+            else { msgHTML = `<div class="msg-wrapper ${isMe ? "sent" : "received"}"><div class="msg-bubble">${text}<div class="msg-time">${timestamp}</div></div></div>`; }
+            chatMessages.insertAdjacentHTML('beforeend', msgHTML);
+        }
+
+        // --- 💰 API: NEGOTIATE & AGREE ---
         async function updateNegotiatedPrice() {
             const newPrice = document.getElementById('new-price-input').value;
             const btn = document.getElementById('update-price-btn');
-
             if (!newPrice) return;
-
-            btn.innerText = '...';
             btn.disabled = true;
-
             try {
                 const response = await fetch(`/api/users/rental/${requestId}/update-price/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        new_price: newPrice,
-                        user_id: currentUserId
-                    })
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_price: newPrice, user_id: currentUserId })
                 });
-
-                if (response.ok) {
-                    document.getElementById('new-price-input').value = '';
-                } else {
-                    // THE FIX: Better error handling to show exactly why the math failed
-                    const errorData = await response.json();
-                    alert(errorData.error || "Failed to update price.");
-                }
-            } catch (err) {
-                alert("Server error.");
-            }
-
-            btn.innerText = 'Update';
+                if (response.ok) document.getElementById('new-price-input').value = '';
+                else { const errData = await response.json(); alert(errData.error); }
+            } catch (err) {}
             btn.disabled = false;
         }
 
-        // --- UI HELPER ---
-        function appendMessageToUI(text, timestamp, isMe, isSystem = false) {
-            let msgHTML = '';
+        async function renterAgreeToPrice() {
+            const btn = document.getElementById('agree-price-btn');
+            btn.disabled = true; btn.innerText = "Processing...";
+            try {
+                await fetch(`/api/users/rental/${requestId}/agree-price/`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: currentUserId })
+                });
+            } catch(e) { btn.disabled = false; btn.innerText = "Accept & Agree to Price"; }
+        }
 
-            if (isSystem) {
-                msgHTML = `
-                    <div class="msg-wrapper system">
-                        <div class="msg-bubble">
-                            ${text}
-                            <div class="msg-time">${timestamp}</div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                const wrapperClass = isMe ? "sent" : "received";
-                msgHTML = `
-                    <div class="msg-wrapper ${wrapperClass}">
-                        <div class="msg-bubble">
-                            ${text}
-                            <div class="msg-time">${timestamp}</div>
-                        </div>
-                    </div>
-                `;
+        // --- 📸 CAMERA & UPLOAD LOGIC ---
+        let videoStream = null;
+        let capturedPhotos = [];
+
+        async function startCamera() {
+            const video = document.getElementById('camera-stream');
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+                video.srcObject = videoStream;
+            } catch (err) { console.log(err); }
+        }
+
+        function stopCamera() {
+            try {
+                if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); }
+            } catch(e) {}
+        }
+
+        function capturePhoto() {
+            if (capturedPhotos.length >= 4) return;
+            const video = document.getElementById('camera-stream');
+            const canvas = document.getElementById('photo-canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob((blob) => {
+                capturedPhotos.push(blob);
+                document.getElementById('photo-preview-grid').innerHTML += `<img src="${URL.createObjectURL(blob)}" class="photo-thumb">`;
+                document.getElementById('upload-vault-btn').disabled = false;
+            }, 'image/jpeg', 0.8);
+        }
+
+        async function uploadEvidenceToVault() {
+            if (capturedPhotos.length === 0) return;
+            const btn = document.getElementById('upload-vault-btn');
+            const captureBtn = document.getElementById('capture-btn');
+            btn.disabled = true;
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Uploading...`;
+            btn.style.display = 'flex'; btn.style.alignItems = 'center'; btn.style.justifyContent = 'center'; btn.style.gap = '0.4rem';
+            if (captureBtn) captureBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('user_id', currentUserId);
+            capturedPhotos.forEach((blob, idx) => formData.append('evidence_images', blob, `img_${idx}.jpg`));
+
+            try {
+                const response = await fetch(`/api/users/rental/${requestId}/upload-evidence/`, { method: 'POST', body: formData });
+                if (response.ok) {
+                    // Success — update state and let the UI manager handle the rest
+                    isEvidenceUploaded = true;
+                    stopCamera();
+                    updateSecurityUI();
+                } else {
+                    // Server error — re-enable so they can retry
+                    btn.disabled = false;
+                    btn.innerHTML = 'Upload to Vault';
+                    if (captureBtn) captureBtn.disabled = false;
+                    const err = await response.json().catch(() => ({}));
+                    alert(err.error || 'Upload failed. Please try again.');
+                }
+            } catch (err) {
+                // Network error — re-enable
+                btn.disabled = false;
+                btn.innerHTML = 'Upload to Vault';
+                if (captureBtn) captureBtn.disabled = false;
+                alert('Network error. Please check your connection and try again.');
             }
-            chatMessages.insertAdjacentHTML('beforeend', msgHTML);
+        }
+
+        // --- 👁️ 1-TIME VIEW LOGIC ---
+        async function fetchAndDisplayEvidence() {
+            try {
+                const response = await fetch(`/api/users/rental/${requestId}/evidence/?user_id=${currentUserId}`);
+                const data = await response.json();
+
+                if (data.images && data.images.length > 0) {
+                    const grid = document.getElementById('evidence-display-grid');
+                    grid.innerHTML = '';
+                    data.images.forEach(url => {
+                        grid.innerHTML += `<img src="${url}" alt="Evidence">`;
+                    });
+
+                    document.getElementById('evidence-modal').classList.add('show');
+                } else {
+                    alert("Evidence could not be loaded.");
+                }
+            } catch(e) { alert("Network error."); }
+        }
+
+        function burnEvidenceAndUnlock() {
+            document.getElementById('evidence-modal').classList.remove('show');
+            localStorage.setItem('evidence_viewed_' + requestId, 'true');
+            hasViewedEvidenceLocally = true;
+            updateSecurityUI();
         }
 
         loadHistory();
