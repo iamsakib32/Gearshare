@@ -4,7 +4,8 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import UserRegistrationSerializer
 from django.contrib.auth import authenticate
-from .models import CustomUser, RoleSwitchRequest, GearItem, GearGallery, RentalRequest, ChatMessage
+from .models import CustomUser, RoleSwitchRequest, GearItem, GearGallery, RentalRequest, ChatMessage, ScoreEvent, \
+    EventType
 from django.utils import timezone
 from datetime import timedelta
 from .serializers import GearItemSerializer
@@ -19,6 +20,9 @@ from django.db.models import Q
 import random, requests
 from django.core.mail import send_mail
 from django.conf import settings
+
+# Trust Engine Service
+from .trust_engine import TrustScoreService, get_tier_level
 
 
 class RegisterView(APIView):
@@ -58,12 +62,14 @@ class ApproveKYCView(APIView):
     def post(self, request, user_id):
         try:
             user = CustomUser.objects.get(id=user_id)
-            user.trust_tier = 'Verified'
-            user.trust_score = 7.0
             user.kyc_attempts = 0
             if user.kyc_video:
                 user.kyc_video.delete(save=False)
             user.save()
+
+            # Trust Engine calculates tier automatically
+            TrustScoreService.apply_event(user, EventType.KYC_VERIFIED, reason='KYC approved by admin')
+
             return Response({"message": f"{user.username} Approved!"}, status=status.HTTP_200_OK)
         except CustomUser.DoesNotExist:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -106,12 +112,7 @@ class ResubmitKYCView(APIView):
 
 
 def get_user_tier_level(tier_string):
-    tier_mapping = {
-        'Suspended': 0,
-        'Rejected': 1,
-        'Unverified': 1,
-        'Verified': 2,
-    }
+    tier_mapping = {'Suspended': 0, 'Rejected': 1, 'Unverified': 1, 'Verified': 2}
     return tier_mapping.get(tier_string, 1)
 
 
@@ -128,10 +129,8 @@ class GearListView(APIView):
                     min_trust_tier__lte=user_clearance
                 ).select_related('owner')
             except CustomUser.DoesNotExist:
-                # Invalid user_id — fall back to showing everything
                 items = GearItem.objects.filter(is_active=True).select_related('owner')
         else:
-            # Logged-out users see all active listings — trust filtering only applies when renting
             items = GearItem.objects.filter(is_active=True).select_related('owner')
 
         serializer = GearItemSerializer(items, many=True)
@@ -174,7 +173,6 @@ class AddGearAPIView(APIView):
 
             if 'image' in request.FILES:
                 new_item.image = request.FILES['image']
-
             new_item.save()
 
             extra_images = request.FILES.getlist('extra_images')
@@ -215,11 +213,13 @@ class GearDetailAPIView(APIView):
         item.location = request.data.get('location', item.location)
         item.area = request.data.get('area', item.area)
         item.replacement_value = request.data.get('replacement_value', getattr(item, 'replacement_value', 0.00)) or 0.00
-        item.min_rental_duration = request.data.get('min_rental_duration', getattr(item, 'min_rental_duration', '1 day'))
+        item.min_rental_duration = request.data.get('min_rental_duration',
+                                                    getattr(item, 'min_rental_duration', '1 day'))
         item.available_days = request.data.get('available_days', getattr(item, 'available_days', 'S,M,T,W,Th,F,Sa'))
         item.delivery_option = request.data.get('delivery_option', getattr(item, 'delivery_option', 'Pickup only'))
         item.pickup_location = request.data.get('pickup_location', getattr(item, 'pickup_location', ''))
-        item.cancellation_policy = request.data.get('cancellation_policy', getattr(item, 'cancellation_policy', 'flexible'))
+        item.cancellation_policy = request.data.get('cancellation_policy',
+                                                    getattr(item, 'cancellation_policy', 'flexible'))
 
         if 'is_negotiable' in request.data:
             is_negotiable_str = str(request.data.get('is_negotiable')).lower()
@@ -390,24 +390,40 @@ class SubmitRentalRequestAPIView(APIView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
             rental_req = RentalRequest.objects.create(
-                gear=gear,
-                renter=renter,
-                owner=gear.owner,
-                status='Pending'
+                gear=gear, renter=renter, owner=gear.owner, status='Pending'
             )
 
-            return Response({
-                "message": "Rental Request Sent!",
-                "request_id": rental_req.id
-            }, status=status.HTTP_201_CREATED)
+            return Response({"message": "Rental Request Sent!", "request_id": rental_req.id},
+                            status=status.HTTP_201_CREATED)
 
         except (GearItem.DoesNotExist, CustomUser.DoesNotExist):
             return Response({"error": "Item or user not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
+# --- RESTORED RENTAL HTML VIEWS ---
 def rental_chat_page(request, request_id):
     rental_request = get_object_or_404(RentalRequest, id=request_id)
     return render(request, 'rental_chat_placeholder.html', {'rental_request': rental_request})
+
+
+def rental_contract_page(request, request_id):
+    rental_req = get_object_or_404(RentalRequest, id=request_id)
+
+    # Fallback to username if names aren't provided
+    owner_name = f"{rental_req.owner.first_name} {rental_req.owner.last_name}".strip() or rental_req.owner.username
+    renter_name = f"{rental_req.renter.first_name} {rental_req.renter.last_name}".strip() or rental_req.renter.username
+
+    context = {
+        'rental_request': rental_req,
+        'owner_name': owner_name,
+        'renter_name': renter_name,
+        'gear_name': rental_req.gear.title,
+        'gear_condition': rental_req.gear.condition,
+        'rental_duration': rental_req.gear.min_rental_duration,
+        'total_price': rental_req.negotiated_price or rental_req.gear.price_per_day,
+        'penalty_fee': rental_req.gear.replacement_value,
+    }
+    return render(request, 'rental_contract.html', context)
 
 
 class ChatHistoryAPIView(APIView):
@@ -449,21 +465,21 @@ class UpdateChatPriceAPIView(APIView):
             return Response({"error": "Invalid price format."}, status=status.HTTP_400_BAD_REQUEST)
 
         if str(rental_req.owner.id) != str(user_id):
-            return Response({"error": "Unauthorized. Only the owner can update the price."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "Unauthorized. Only the owner can update the price."},
+                            status=status.HTTP_403_FORBIDDEN)
 
         gear = rental_req.gear
         original_price = gear.price_per_day
 
         if new_price >= original_price:
-            return Response({
-                "error": f"You can only offer a discount. The original price is ৳{original_price:.2f}."
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": f"You can only offer a discount. The original price is ৳{original_price:.2f}."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         min_allowed_price = original_price * Decimal('0.60')
         if new_price < min_allowed_price:
-            return Response({
-                "error": f"You cannot deduct more than 40%. The minimum allowed price is ৳{min_allowed_price:.2f}."
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": f"You cannot deduct more than 40%. The minimum allowed price is ৳{min_allowed_price:.2f}."},
+                status=status.HTTP_400_BAD_REQUEST)
 
         rental_req.negotiated_price = new_price
         rental_req.save()
@@ -503,7 +519,6 @@ class AgreeToPriceAPIView(APIView):
         rental_req.renter_agreed_price = True
         rental_req.save()
 
-        # Send live notification to owner
         system_text = "System Update: The renter has agreed to the negotiated price. Please upload live camera evidence to proceed to the contract."
         msg = ChatMessage.objects.create(
             rental_request=rental_req,
@@ -538,7 +553,6 @@ class UploadEvidenceAPIView(APIView):
             return Response({"error": "Unauthorized. Only the owner can upload evidence."},
                             status=status.HTTP_403_FORBIDDEN)
 
-        # Catch the live camera photos
         images = request.FILES.getlist('evidence_images')
 
         if not images or len(images) < 1:
@@ -546,7 +560,6 @@ class UploadEvidenceAPIView(APIView):
         if len(images) > 4:
             return Response({"error": "Maximum 4 photos allowed."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Save to Evidence Vault in Supabase
         from .models import RentalEvidence
         for img in images:
             RentalEvidence.objects.create(rental_request=rental_req, image=img)
@@ -554,7 +567,6 @@ class UploadEvidenceAPIView(APIView):
         rental_req.evidence_uploaded = True
         rental_req.save()
 
-        # Send live notification to renter unlocking the contract
         system_text = "System Update: The owner has uploaded the live condition evidence. The Digital Contract is now unlocked."
         msg = ChatMessage.objects.create(
             rental_request=rental_req,
@@ -577,6 +589,20 @@ class UploadEvidenceAPIView(APIView):
         )
 
         return Response({"message": "Evidence uploaded successfully!"}, status=status.HTTP_200_OK)
+
+
+class GetEvidenceAPIView(APIView):
+    def get(self, request, request_id):
+        user_id = request.query_params.get('user_id')
+        rental_req = get_object_or_404(RentalRequest, id=request_id)
+
+        if str(rental_req.renter.id) != str(user_id) and str(rental_req.owner.id) != str(user_id):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        from .models import RentalEvidence
+        evidence = RentalEvidence.objects.filter(rental_request=rental_req)
+        urls = [e.image.url for e in evidence if e.image]
+        return Response({"images": urls}, status=status.HTTP_200_OK)
 
 
 class UserChatListAPIView(APIView):
@@ -619,21 +645,18 @@ class UserChatListAPIView(APIView):
                 'latest_message': snippet,
                 'is_system': latest_msg.is_system_update if latest_msg else False,
                 'has_unread': has_unread,
-                'timestamp': localtime(latest_msg.created_at).strftime("%I:%M %p") if latest_msg else localtime(req.created_at).strftime("%I:%M %p"),
+                'timestamp': localtime(latest_msg.created_at).strftime("%I:%M %p") if latest_msg else localtime(
+                    req.created_at).strftime("%I:%M %p"),
                 'sort_time': latest_msg.created_at if latest_msg else req.created_at
             })
 
         chat_list.sort(key=lambda x: x['sort_time'], reverse=True)
-
         for item in chat_list:
             del item['sort_time']
 
         return Response(chat_list, status=status.HTTP_200_OK)
 
 
-# ─────────────────────────────────────────────────────
-# HELPER: Brevo Email Sender
-# ─────────────────────────────────────────────────────
 def send_otp_email(email, code, purpose):
     if purpose == 'login':
         subject = '🔐 GearShare — Your Login OTP'
@@ -645,9 +668,6 @@ def send_otp_email(email, code, purpose):
     send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
 
 
-# ─────────────────────────────────────────────────────
-# SECURE 2FA & PASSWORD RESET APIs
-# ─────────────────────────────────────────────────────
 class SendLoginOTPView(APIView):
     def post(self, request):
         login_id = request.data.get('username')
@@ -678,7 +698,6 @@ class SendLoginOTPView(APIView):
             user.save()
 
             send_otp_email(user.email, otp, 'login')
-
             return Response({"message": "OTP sent!", "email": user.email}, status=status.HTTP_200_OK)
 
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -707,7 +726,6 @@ class VerifyLoginOTPView(APIView):
                 return Response({"error": f"Invalid OTP. {3 - user.otp_failed_attempts} attempts left."},
                                 status=status.HTTP_400_BAD_REQUEST)
 
-            # Success!
             user.otp_code = None
             user.otp_expiration = None
             user.otp_failed_attempts = 0
@@ -795,9 +813,6 @@ class ResetPasswordWithOTPView(APIView):
             return Response({"error": "Invalid request."}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ─────────────────────────────────────────────────────
-# GOOGLE OAUTH: REDIRECT & CALLBACK
-# ─────────────────────────────────────────────────────
 class GoogleLoginRedirectView(APIView):
     def get(self, request):
         google_auth_url = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -819,7 +834,6 @@ class GoogleAuthCallbackView(APIView):
         if not code:
             return HttpResponse("Error: No code provided by Google.", status=400)
 
-        # 1. Exchange code for access token
         token_url = "https://oauth2.googleapis.com/token"
         data = {
             "client_id": settings.GOOGLE_OAUTH_CLIENT_ID,
@@ -834,7 +848,6 @@ class GoogleAuthCallbackView(APIView):
 
         access_token = res.json().get("access_token")
 
-        # 2. Fetch User Info from Google
         user_info_url = "https://www.googleapis.com/oauth2/v2/userinfo"
         user_res = requests.get(user_info_url, headers={"Authorization": f"Bearer {access_token}"})
         if not user_res.ok:
@@ -843,22 +856,17 @@ class GoogleAuthCallbackView(APIView):
         user_data = user_res.json()
         email = user_data.get("email")
         google_id = user_data.get("id")
-        first_name = user_data.get("given_name", "")
-        last_name = user_data.get("family_name", "")
 
-        # 3. Look up existing account — Google OAuth is sign-in only, not registration
         try:
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
             return render(request, 'no_account.html', {'email': email})
 
-        # Link Google ID to existing account on first Google sign-in
         if not user.google_id:
             user.google_id = google_id
             user.auth_provider = 'google'
             user.save()
 
-        # 4. Generate Frontend Payload (Invisible Redirect)
         html = f"""
         <html>
         <body style="background: #111827; color: #F97316; font-family: sans-serif; text-align: center; padding-top: 5rem;">
@@ -878,35 +886,126 @@ class GoogleAuthCallbackView(APIView):
         return HttpResponse(html)
 
 
-class GetEvidenceAPIView(APIView):
-    def get(self, request, request_id):
-        user_id = request.query_params.get('user_id')
-        rental_req = get_object_or_404(RentalRequest, id=request_id)
+#  RENTAL LIFECYCLE HOOKS (TRUST ENGINE INTEGRATION)
 
-        if str(rental_req.renter.id) != str(user_id) and str(rental_req.owner.id) != str(user_id):
-            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+class ApproveRentalView(APIView):
+    def post(self, request, request_id):
+        rental = get_object_or_404(RentalRequest, id=request_id)
+        owner_id = request.data.get('owner_id')
 
-        from .models import RentalEvidence
-        evidence = RentalEvidence.objects.filter(rental_request=rental_req)
-        urls = [e.image.url for e in evidence if e.image]
-        return Response({"images": urls}, status=status.HTTP_200_OK)
+        if str(rental.owner.id) != str(owner_id):
+            return Response({'error': 'Unauthorized.'}, status=status.HTTP_403_FORBIDDEN)
+
+        rental.status = 'Approved'
+        rental.save()
+
+        # Send automated success message to chat
+        ChatMessage.objects.create(
+            rental_request=rental,
+            sender=rental.owner,
+            text='System: Rental request has been approved!',
+            is_system_update=True,
+        )
+        return Response({'message': 'Rental approved.'}, status=status.HTTP_200_OK)
 
 
-def rental_contract_page(request, request_id):
-    rental_req = get_object_or_404(RentalRequest, id=request_id)
+class CompleteRentalView(APIView):
+    def post(self, request, request_id):
+        rental = get_object_or_404(RentalRequest, id=request_id)
+        owner_id = request.data.get('owner_id')
 
-    # Get actual names (fallback to username if they didn't provide a first name via Google)
-    owner_name = f"{rental_req.owner.first_name} {rental_req.owner.last_name}".strip() or rental_req.owner.username
-    renter_name = f"{rental_req.renter.first_name} {rental_req.renter.last_name}".strip() or rental_req.renter.username
+        if str(rental.owner.id) != str(owner_id):
+            return Response({'error': 'Unauthorized.'}, status=status.HTTP_403_FORBIDDEN)
 
-    context = {
-        'rental_request': rental_req,
-        'owner_name': owner_name,
-        'renter_name': renter_name,
-        'gear_name': rental_req.gear.title,
-        'gear_condition': rental_req.gear.condition,
-        'rental_duration': rental_req.gear.min_rental_duration,
-        'total_price': rental_req.negotiated_price or rental_req.gear.price_per_day,
-        'penalty_fee': rental_req.gear.replacement_value,
-    }
-    return render(request, 'rental_contract.html', context)
+        rental.status = 'Completed'
+        rental.owner.transaction_count += 1
+        rental.renter.transaction_count += 1
+        rental.owner.save(update_fields=['transaction_count'])
+        rental.renter.save(update_fields=['transaction_count'])
+        rental.save()
+
+        # Boost score automatically!
+        TrustScoreService.apply_event(
+            rental.renter,
+            EventType.RENTAL_COMPLETED,
+            rental_request_id=rental.id,
+            reason=f'Completed rental of {rental.gear.title}',
+        )
+        TrustScoreService.apply_event(
+            rental.owner,
+            EventType.RENTAL_COMPLETED,
+            rental_request_id=rental.id,
+            reason=f'Owner: rental of {rental.gear.title} completed',
+        )
+        return Response({'message': 'Rental marked as completed.'}, status=status.HTTP_200_OK)
+
+
+class CancelRentalView(APIView):
+    def post(self, request, request_id):
+        rental = get_object_or_404(RentalRequest, id=request_id)
+        renter_id = request.data.get('renter_id')
+
+        if str(rental.renter.id) != str(renter_id):
+            return Response({'error': 'Unauthorized.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Apply penalty automatically!
+        if rental.status == 'Approved':
+            TrustScoreService.apply_event(
+                rental.renter,
+                EventType.LAST_MIN_CANCEL,
+                rental_request_id=rental.id,
+                reason='Cancelled an already-approved rental',
+            )
+
+        rental.status = 'Declined'
+        rental.save()
+        return Response({'message': 'Rental cancelled.'}, status=status.HTTP_200_OK)
+
+
+#  NEW: TRUST ENGINE API VIEWS
+
+class ApplyTrustEventView(APIView):
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        event_type = request.data.get('event_type')
+        user = get_object_or_404(CustomUser, id=user_id)
+
+        event = TrustScoreService.apply_event(
+            user, event_type,
+            days_late=int(request.data.get('days_late', 1)),
+            reason=request.data.get('reason', ''),
+            rental_request_id=request.data.get('rental_request_id'),
+        )
+        return Response({'message': 'Trust score updated.'}, status=status.HTTP_200_OK)
+
+
+class AdminAdjustTrustView(APIView):
+    def post(self, request):
+        user = get_object_or_404(CustomUser, id=request.data.get('user_id'))
+        event = TrustScoreService.apply_event(
+            user, EventType.ADMIN_ADJUSTMENT,
+            custom_delta=request.data.get('delta'),
+            reason=request.data.get('reason', 'Admin adjustment'),
+        )
+        return Response({'message': 'Adjustment applied.'}, status=status.HTTP_200_OK)
+
+
+class TrustHistoryView(APIView):
+    # Returns the last 50 score events for the admin panel
+    def get(self, request, user_id):
+        user = get_object_or_404(CustomUser, id=user_id)
+        events = ScoreEvent.objects.filter(user=user).order_by('-created_at')[:50]
+        data = [{'event_type': e.event_type, 'delta': e.delta, 'score_after': e.score_after, 'reason': e.reason} for e
+                in events]
+        return Response({'user': user.username, 'events': data}, status=status.HTTP_200_OK)
+
+
+class TrustProfileView(APIView):
+    # Public view for frontend profile badges
+    def get(self, request, user_id):
+        user = get_object_or_404(CustomUser, id=user_id)
+        return Response({
+            'username': user.username,
+            'trust_score': user.trust_score,
+            'trust_tier': user.trust_tier,
+        }, status=status.HTTP_200_OK)

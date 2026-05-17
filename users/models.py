@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.files.storage import storages
+from django.utils import timezone
 
 
 class CustomUser(AbstractUser):
@@ -31,7 +32,7 @@ class CustomUser(AbstractUser):
     can_switch_role = models.BooleanField(default=False)
     role_status_msg = models.CharField(max_length=255, blank=True, null=True)
 
-    # --- AUTHENTICATION & SECURITY FIELDS ---
+    # Google Auth and OTP Security
     google_id = models.CharField(max_length=200, blank=True, null=True, unique=True)
     auth_provider = models.CharField(max_length=50, default='email', null=True, blank=True)
     otp_code = models.CharField(max_length=6, blank=True, null=True)
@@ -67,9 +68,8 @@ class GearItem(models.Model):
     cancellation_policy = models.CharField(max_length=50, default='flexible')
 
     is_negotiable = models.BooleanField(default=True)
-    min_trust_tier = models.IntegerField(default=1)  # Let all users see gear!
+    min_trust_tier = models.IntegerField(default=1)
 
-    # --- YOUR NEW ADVANCED SEARCH FIELDS ---
     location = models.CharField(max_length=100, blank=True, null=True)
     area = models.CharField(max_length=100, blank=True, null=True)
 
@@ -117,7 +117,7 @@ class RentalRequest(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     negotiated_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
-    # --- NEW EVIDENCE VAULT FIELDS ---
+    # Evidence Vault integration
     renter_agreed_price = models.BooleanField(default=False)
     evidence_uploaded = models.BooleanField(default=False)
 
@@ -128,7 +128,6 @@ class RentalRequest(models.Model):
         return f"Request: {self.renter.username} -> {self.gear.title}"
 
 
-# --- NEW MODEL: THE EVIDENCE VAULT ---
 class RentalEvidence(models.Model):
     rental_request = models.ForeignKey(RentalRequest, on_delete=models.CASCADE, related_name='evidence_photos')
     image = models.ImageField(upload_to='evidence_vault/')
@@ -149,3 +148,69 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"Msg from {self.sender.username} on Req #{self.rental_request.id}"
+
+
+#  TRUST SCORE ENGINE CONSTANTS & LEDGER
+
+
+class EventType(models.TextChoices):
+    RENTAL_COMPLETED   = 'rental_completed',   'Rental Completed'
+    POSITIVE_REVIEW    = 'positive_review',    'Positive Review (4–5★)'
+    ON_TIME_RETURN     = 'on_time_return',     'On-Time Return'
+    KYC_VERIFIED       = 'kyc_verified',       'KYC Verified'
+    LATE_RETURN        = 'late_return',        'Late Return (per day)'
+    LAST_MIN_CANCEL    = 'last_min_cancel',    'Last-Minute Cancellation'
+    POOR_REVIEW        = 'poor_review',        'Poor Review (1–2★)'
+    DISPUTE_LOST_MINOR = 'dispute_lost_minor', 'Dispute Lost (minor)'
+    DISPUTE_LOST_MAJOR = 'dispute_lost_major', 'Dispute Lost (major)'
+    INACTIVITY_DECAY   = 'inactivity_decay',   'Inactivity Decay'
+    ADMIN_ADJUSTMENT   = 'admin_adjustment',   'Admin Manual Adjustment'
+
+SCORE_DELTAS = {
+    EventType.RENTAL_COMPLETED:   +0.10,
+    EventType.POSITIVE_REVIEW:    +0.20,
+    EventType.ON_TIME_RETURN:     +0.05,
+    EventType.KYC_VERIFIED:       None,
+    EventType.LATE_RETURN:        -0.50,
+    EventType.LAST_MIN_CANCEL:    -1.00,
+    EventType.POOR_REVIEW:        -0.80,
+    EventType.DISPUTE_LOST_MINOR: -3.00,
+    EventType.DISPUTE_LOST_MAJOR: -5.00,
+    EventType.INACTIVITY_DECAY:   -0.10,
+    EventType.ADMIN_ADJUSTMENT:   None,
+}
+
+TIER_THRESHOLDS = [
+    (8.0,  'Elite'),
+    (6.0,  'Verified'),
+    (4.0,  'Restricted'),
+    (0.0,  'Suspended'),
+]
+
+TIER_LEVELS = {
+    'Suspended':  0,
+    'Restricted': 1,
+    'Verified':   2,
+    'Elite':      3,
+}
+
+# Max score logic
+SCORE_MIN = 0.0
+SCORE_MAX = 10.0
+
+class ScoreEvent(models.Model):
+    # Immutable log. Every score change gets recorded here for security.
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='score_events')
+    event_type  = models.CharField(max_length=40, choices=EventType.choices)
+    delta       = models.FloatField()
+    score_before = models.FloatField()
+    score_after  = models.FloatField()
+    tier_before  = models.CharField(max_length=20)
+    tier_after   = models.CharField(max_length=20)
+    rental_request_id = models.IntegerField(null=True, blank=True)
+    reason = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes  = [models.Index(fields=['user', '-created_at'])]
